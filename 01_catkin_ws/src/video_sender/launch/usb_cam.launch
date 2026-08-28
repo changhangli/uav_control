@@ -1,0 +1,61 @@
+<launch>
+
+  <!-- ========================= -->
+  <!-- USB Camera Configuration  -->
+  <!-- ========================= -->
+
+  <!-- 摄像头设备 -->
+  <arg name="video_device" default="/dev/video0"/>
+
+  <!-- 图像尺寸 -->
+  <arg name="image_width"  default="1280"/>
+  <arg name="image_height" default="720"/>
+
+  <!-- 帧率 -->
+  <arg name="framerate" default="30"/>
+
+  <!--
+      当前使用 YUYV。
+  -->
+  <arg name="pixel_format" default="yuyv"/>
+
+  <!-- V4L2 IO -->
+  <arg name="io_method" default="mmap"/>
+
+  <!-- TF frame id -->
+  <arg name="camera_frame_id" default="camera"/>
+
+
+  <!-- ========================= -->
+  <!-- usb_cam node              -->
+  <!-- ========================= -->
+
+  <node pkg="usb_cam"
+        type="usb_cam_node"
+        name="usb_cam"
+        output="screen">
+
+    <param name="video_device"
+           value="$(arg video_device)"/>
+
+    <param name="image_width"
+           value="$(arg image_width)"/>
+
+    <param name="image_height"
+           value="$(arg image_height)"/>
+
+    <param name="framerate"
+           value="$(arg framerate)"/>
+
+    <param name="pixel_format"
+           value="$(arg pixel_format)"/>
+
+    <param name="io_method"
+           value="$(arg io_method)"/>
+
+    <param name="camera_frame_id"
+           value="$(arg camera_frame_id)"/>
+
+  </node>
+
+</launch>

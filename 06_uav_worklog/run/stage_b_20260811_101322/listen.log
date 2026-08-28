@@ -1,0 +1,76 @@
+... logging to /home/uav/.ros/log/a5ba0fca-9529-11f1-a611-e1192292e977/roslaunch-uav-Mini-Pc-11030.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+Done checking log file disk usage. Usage is <1GB.
+]2;/home/uav/land_ws/src/sunray_tutorial/launch/auto_listen_hover.launch
+[1mstarted roslaunch server http://127.0.0.1:38367/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /auto_land_1/align_exit_markers: 0
+ * /auto_land_1/align_gain: 1.0
+ * /auto_land_1/align_min_markers: 1
+ * /auto_land_1/approach_floor_z: 0.5
+ * /auto_land_1/approach_xy: 0.15
+ * /auto_land_1/auto_takeoff: False
+ * /auto_land_1/bench_mode: True
+ * /auto_land_1/descend_min_markers: 1
+ * /auto_land_1/drop_height: 0.05
+ * /auto_land_1/error_xy: 0.1
+ * /auto_land_1/error_z: 0.25
+ * /auto_land_1/fine_min_markers: 4
+ * /auto_land_1/height: 1.8
+ * /auto_land_1/land_on_lost_tag: False
+ * /auto_land_1/land_vel: 0.3
+ * /auto_land_1/last_land_time: 1.5
+ * /auto_land_1/listen_hover_mode: False
+ * /auto_land_1/lost_tag_react: 0.6
+ * /auto_land_1/lost_tag_timeout: 8.0
+ * /auto_land_1/low_land_z: 0.2
+ * /auto_land_1/min_start_z: 0.5
+ * /auto_land_1/route_land_mode: True
+ * /auto_land_1/route_warmup_frames: 2
+ * /auto_land_1/slow_drop: 0.05
+ * /auto_land_1/uav_id: 1
+ * /auto_land_1/uav_name: uav
+ * /auto_land_1/use_cmd_mux: True
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+ * /vision_cmd_mux_1/uav_id: 1
+ * /vision_cmd_mux_1/uav_name: uav
+
+NODES
+  /
+    auto_land_1 (sunray_tutorial/auto_land_by_pose)
+    vision_cmd_mux_1 (sunray_tutorial/vision_cmd_mux)
+
+[1mROS_MASTER_URI=http://127.0.0.1:11311[0m
+]2;/home/uav/land_ws/src/sunray_tutorial/launch/auto_listen_hover.launch http://127.0.0.1:11311
+[1mprocess[vision_cmd_mux_1-1]: started with pid [11055][0m
+[1mprocess[auto_land_1-2]: started with pid [11056][0m
+[33m[WARN] [1786414410.112724592]: [MUX] demo=/uav1/demo_control_cmd vision=/uav1/vision_control_cmd out=/uav1/uav_control_cmd pause=/uav1/pause_demo[0m
+[1m[34m [INIT] auto_takeoff=0 bench_mode=1 route_land=1 mux=1 height=1.80 | sub state=/uav1/swarm/uav_state | sub tag=/uav1/sunray_detect/qrcode_detection_ros | pub cmd=/uav1/vision_control_cmd | pub setup=/uav1/setup[0m
+[0m[INFO] [1786414410.128629755]: [INIT] auto_takeoff=0 bench_mode=1 route_land=1 mux=1 height=1.80 | sub state=/uav1/swarm/uav_state | sub tag=/uav1/sunray_detect/qrcode_detection_ros | pub cmd=/uav1/vision_control_cmd | pub setup=/uav1/setup[0m
+[INIT] auto_takeoff=0 bench_mode=1 route_land=1 mux=1 height=1.80 | sub state=/uav1/swarm/uav_state | sub tag=/uav1/sunray_detect/qrcode_detection_ros | pub cmd=/uav1/vision_control_cmd | pub setup=/uav1/setup
+[0m[INFO] [1786414410.131127645]: [INIT] auto_takeoff=false, last_time reset; waiting external UAV + tag[0m
+[INIT] auto_takeoff=false, last_time reset; waiting external UAV + tag
+[33m[WARN] [1786414410.131160245]: [BENCH] bench_mode=true: skip wait for UAVState; NO real flight. Watch [TX] / [LISTEN].[0m
+[BENCH] bench_mode=true: skip wait for UAVState; NO real flight.
+[0m[INFO] [1786414410.631445808]: [OK] got UAVState: armed=0 control_mode=0 pos=[0.00 0.00 0.00][0m
+[OK] got UAVState: armed=0 control_mode=0 pos=[0.00 0.00 0.00]
+[33m[WARN] [1786414410.631567786]: [ROUTE-LAND] ????????????????????? ??? pause_demo ??? ?????????????????????>= 1 ???????????????[0m
+[ROUTE-LAND] 不见码不占总线；见码停航线并降落；warmup=2 帧
+[33m[WARN] [1786414410.681822843]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414413.691561141]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414416.700943101]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414419.709865349]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414422.719368203]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414425.729417127]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414428.739563552]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414431.749649957]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414434.760179924]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414437.770529637]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414440.780331087]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414443.790289808]: [ROUTE-LAND] ???????????????demo ????????????[0m

@@ -1,0 +1,51 @@
+# 降落板位姿门控阈值
+# 不满足任一条件 → 本帧丢弃（或短暂 hold），不向下游乱发飞点
+#
+# 真飞：小板/远距常只有 2～3 个码 → 允许少码，但用平滑压抖动
+
+topic_in: /uav1/sunray_detect/qrcode_detection_ros
+topic_out: /uav1/sunray_detect/landmark_pose_gated
+
+# 最少认出多少个码（仍允许 2；抖动靠平滑压，不靠抬到 8）
+min_markers: 2
+
+# 真飞建议 true：至少见到一个大码，深度更稳
+require_big_marker: true
+
+# RANSAC 误差上限（score，越小越好）
+max_score: 0.02
+max_score_sparse: 0.05
+sparse_marker_threshold: 4
+
+# pz 合理范围（米）
+pz_min: 0.05
+pz_max: 5.0
+
+# 相对上一帧原始值的最大跳变；少码时反而收紧，尖峰直接丢掉
+max_jump_xy: 0.25
+max_jump_z: 0.40
+max_jump_xy_sparse: 0.18
+max_jump_z_sparse: 0.30
+max_jump_yaw: 40.0
+max_jump_yaw_sparse: 25.0
+
+# 没有可信帧超过这么久（秒）视为丢失，重新锁定
+lost_timeout: 0.6
+
+# ---- 平滑（抑制少码抖动）----
+smooth_enable: true
+# alpha 越大跟得越紧、越小越稳；少码用更小 alpha
+smooth_alpha_dense: 0.40
+smooth_alpha_sparse: 0.12
+smooth_alpha_yaw_dense: 0.35
+smooth_alpha_yaw_sparse: 0.08
+# 尖峰被拒时，短暂继续发上一帧平滑值，避免降落节点“丢 tag”
+hold_on_reject: true
+
+# ---- 传给无人机前的坐标处理 ----
+# 官方 auto_land_by_pose 内部已对 py/pz/yaw 取反；接官方节点时勿再翻
+invert_py: false
+
+body_offset_x: 0.0
+body_offset_y: 0.0
+body_offset_z: 0.0

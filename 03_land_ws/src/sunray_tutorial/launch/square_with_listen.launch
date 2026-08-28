@@ -1,0 +1,6 @@
+<!-- 兼容旧名：等同 demo_with_listen demo_id:=3 -->
+<launch>
+    <include file="$(find sunray_tutorial)/launch/demo_with_listen.launch">
+        <arg name="demo_id" value="3"/>
+    </include>
+</launch>

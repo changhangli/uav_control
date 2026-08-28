@@ -1,0 +1,22 @@
+# 降落板实物尺寸（唯一需要手改的文件）
+# 改完后运行：
+#   python3 scripts/apply_board_size.py
+# 会自动重写 aruco_detector_params.json 里的 markerLengths
+#
+# 优先用卷尺量到的「黑块」边长（米）。若两项都填了，脚本直接用它们。
+# 若只填了 board_side_m，则按官方设计比例缩放。
+
+# 整板外轮廓（可选；有实测黑块时可不依赖它）
+board_side_m: 0.20
+
+# 2026-08-05 A4 打印实测（黑块外轮廓）
+measured_small_marker_m: 0.012
+measured_large_marker_m: 0.050
+
+# 深度临时尺度修正：已改回 1.0（不用硬凑距离；等棋盘格标定内参）
+depth_scale: 1.0
+
+# 官方 PDF 设计尺寸（一般不用改）
+design_board_side_m: 0.42
+design_small_marker_m: 0.026
+design_large_marker_m: 0.105

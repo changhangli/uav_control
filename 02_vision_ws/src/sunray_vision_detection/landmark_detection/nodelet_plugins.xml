@@ -1,0 +1,9 @@
+<library path="lib/liblandmark_detection_ros_detector">
+    <class name="landmark_detection_ros/LandmarkDetector"
+        type="sunray_detection::landmark_detection_ros::LandmarkDetector"
+		base_class_type="nodelet::Nodelet">
+		<description>
+          landmark_detection_ros detector
+		</description>
+	</class>
+</library>

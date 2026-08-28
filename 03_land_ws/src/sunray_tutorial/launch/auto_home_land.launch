@@ -1,0 +1,33 @@
+<!-- 启动脚本接管：老师地面站 demo 飞着 → 本节点杀 demo → 回 mocap 原点悬停 → 视觉降落
+     流程：地面站解锁起飞选方/圆/六边 → bash start_home_land.sh
+-->
+<launch>
+	<arg name="uav_id" default="1"/>
+    <arg name="uav_name" default="uav" />
+    <arg name="bench_mode" default="false" />
+    <arg name="home_x" default="0.0" />
+    <arg name="home_y" default="0.0" />
+    <arg name="home_z" default="1.0" />
+    <arg name="home_xy_tol" default="0.20" />
+    <arg name="home_z_tol" default="0.12" />
+    <arg name="home_hover_sec" default="2.5" />
+
+    <include file="$(find sunray_tutorial)/launch/auto_land_by_pose.launch">
+        <arg name="auto_takeoff" value="false" />
+        <arg name="bench_mode" value="$(arg bench_mode)" />
+        <arg name="home_land_mode" value="true" />
+        <arg name="listen_hover_mode" value="false" />
+        <arg name="route_land_mode" value="false" />
+        <arg name="use_cmd_mux" value="false" />
+        <arg name="land_on_lost_tag" value="false" />
+        <arg name="descend_min_markers" value="2" />
+        <arg name="uav_id" value="$(arg uav_id)"/>
+        <arg name="uav_name" value="$(arg uav_name)"/>
+        <arg name="home_x" value="$(arg home_x)" />
+        <arg name="home_y" value="$(arg home_y)" />
+        <arg name="home_z" value="$(arg home_z)" />
+        <arg name="home_xy_tol" value="$(arg home_xy_tol)" />
+        <arg name="home_z_tol" value="$(arg home_z_tol)" />
+        <arg name="home_hover_sec" value="$(arg home_hover_sec)" />
+    </include>
+</launch>

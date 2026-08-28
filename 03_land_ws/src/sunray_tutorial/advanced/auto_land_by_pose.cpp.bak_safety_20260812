@@ -1,0 +1,1046 @@
+/*
+程序功能：使用XyzPosYawBody接口，实现无人机自动降落
+*/
+
+#include <ros/ros.h>
+#include "ros_msg_utils.h"
+#include "printf_utils.h"
+#include <detection_msgs/TargetMsg.h>
+#include <detection_msgs/TargetsInFrameMsg.h>
+#include "utils.hpp"
+#include <swarm_msgs/UAVSetup.h>
+#include <swarm_msgs/UAVControlCMD.h>
+#include <swarm_msgs/UAVState.h>
+#include <std_msgs/Bool.h>
+#include <std_msgs/String.h>
+#include <printf_format.h>
+#include <cstdio>
+#include <cmath>
+
+using namespace std;
+using namespace sunray_logger;
+string node_name;
+// 存储发送给控制模块的指令
+swarm_msgs::UAVControlCMD uav_cmd;
+// 无人机设置指令
+swarm_msgs::UAVSetup uav_setup;
+// 停止标志
+bool stop_flag{false};
+
+swarm_msgs::UAVState uav_state;
+
+double x_rel, y_rel, z_rel, yaw_rel;
+// 本帧认出的 ArUco 个数（landmark: TargetMsg.category_id = n_total）
+int n_markers{0};
+// 可能表示是否收到当前位置信息和目标检测信息的标志位。
+bool pos_flag{false};
+bool tag_flag{false};
+
+// 移动平均滤波器，用于平滑目标物相对位置和朝向的变化。
+MovingAverageFilter x_filter(5);
+MovingAverageFilter y_filter(5);
+MovingAverageFilter z_filter(5);
+MovingAverageFilter yaw_filter(5);
+ros::Time last_time{0};
+ros::Publisher control_cmd_pub;
+ros::Publisher pause_demo_pub;
+bool pause_demo_active{false};
+ros::Publisher listen_status_pub;
+static bool s_bench_mode{false};
+ros::Publisher uav_setup_pub;
+string cmd_topic;
+string setup_topic;
+string state_topic;
+string tag_topic;
+
+static const char *cmd_to_str(uint8_t cmd)
+{
+    switch (cmd)
+    {
+    case swarm_msgs::UAVControlCMD::XyzPos: return "XyzPos(1)";
+    case swarm_msgs::UAVControlCMD::XyzVel: return "XyzVel(2)";
+    case swarm_msgs::UAVControlCMD::XyVelZPos: return "XyVelZPos(3)";
+    case swarm_msgs::UAVControlCMD::XyzPosYaw: return "XyzPosYaw(4)";
+    case swarm_msgs::UAVControlCMD::XyzPosYawBody: return "XyzPosYawBody(14)";
+    case swarm_msgs::UAVControlCMD::XyzVelYawBody: return "XyzVelYawBody(15)";
+    case swarm_msgs::UAVControlCMD::Takeoff: return "Takeoff(100)";
+    case swarm_msgs::UAVControlCMD::Land: return "Land(101)";
+    case swarm_msgs::UAVControlCMD::Hover: return "Hover(102)";
+    default: return "CMD(?)";
+    }
+}
+
+static void set_pause_demo(bool on)
+{
+    if (!pause_demo_pub)
+        return;
+    if (on == pause_demo_active)
+        return;
+    std_msgs::Bool msg;
+    msg.data = on;
+    pause_demo_pub.publish(msg);
+    pause_demo_active = on;
+    ROS_WARN("[PAUSE_DEMO] %s → demo 航线暂停发点", on ? "true" : "false");
+    printf("[PAUSE_DEMO] %s\n", on ? "true (vision active)" : "false (demo continues)");
+    fflush(stdout);
+}
+
+// 老师地面站图形界面启动的方/圆/六边 demo：直接发 /uav_control_cmd，没有 remap。
+// 借鉴「点降落」：切走 CMD_CONTROL → demo 自己检测并退出；再切回 CMD_CONTROL 由视觉接管。
+// 不动 catkin；航点任务也会因离开 CMD_CONTROL / 随后 Hover 而被打断。
+static bool interrupt_teacher_route(const char *reason)
+{
+    if (!uav_setup_pub)
+        return false;
+    if (s_bench_mode)
+    {
+        ROS_WARN("[INTERRUPT] bench_mode：跳过切模式，仅本地验视觉指令 (%s)", reason ? reason : "");
+        printf("[INTERRUPT] bench skip mode kick\n");
+        fflush(stdout);
+        return true;
+    }
+
+    ROS_WARN("[INTERRUPT] 见码！仿地面站点降落：WITHOUT_CONTROL 打断航线 → CMD_CONTROL 视觉接管 (%s)",
+             reason ? reason : "");
+    printf("[INTERRUPT] WITHOUT_CONTROL → stop teacher route/demo, then CMD_CONTROL\n");
+    fflush(stdout);
+
+    uav_setup.header.stamp = ros::Time::now();
+    uav_setup.cmd = swarm_msgs::UAVSetup::SET_CONTROL_MODE;
+    uav_setup.control_mode = "WITHOUT_CONTROL";
+    uav_setup_pub.publish(uav_setup);
+
+    // 给 demo 节点一个检测窗口（它们约 10Hz 检查 control_mode）
+    for (int i = 0; i < 8 && ros::ok(); ++i)
+    {
+        ros::spinOnce();
+        ros::Duration(0.05).sleep();
+    }
+
+    uav_setup.header.stamp = ros::Time::now();
+    uav_setup.cmd = swarm_msgs::UAVSetup::SET_CONTROL_MODE;
+    uav_setup.control_mode = "CMD_CONTROL";
+    uav_setup_pub.publish(uav_setup);
+
+    for (int i = 0; i < 4 && ros::ok(); ++i)
+    {
+        ros::spinOnce();
+        ros::Duration(0.05).sleep();
+    }
+
+    // 先发 Hover，占住总线，避免间隙失控
+    uav_cmd.header.stamp = ros::Time::now();
+    uav_cmd.cmd = swarm_msgs::UAVControlCMD::Hover;
+    control_cmd_pub.publish(uav_cmd);
+    return true;
+}
+
+static void publish_listen_status(const char *phase)
+{
+    if (!listen_status_pub)
+        return;
+    std_msgs::String msg;
+    char buf[320];
+    snprintf(buf, sizeof(buf),
+             "phase=%s;px=%.4f;py=%.4f;pz=%.4f;nm=%d;pause=%d;bench=%d;armed=%d;cmd=%u",
+             phase ? phase : "unknown",
+             x_rel, y_rel, z_rel, n_markers,
+             pause_demo_active ? 1 : 0,
+             s_bench_mode ? 1 : 0,
+             (int)uav_state.armed,
+             (unsigned)uav_cmd.cmd);
+    msg.data = buf;
+    listen_status_pub.publish(msg);
+}
+
+// 显式打印并发布控制指令（便于确认是否真的下发给控制栈）
+void publish_control_cmd(const char *phase)
+{
+    uav_cmd.header.stamp = ros::Time::now();
+    control_cmd_pub.publish(uav_cmd);
+    int nsub = control_cmd_pub.getNumSubscribers();
+    char buf[512];
+    snprintf(buf, sizeof(buf),
+             "[TX %s] topic=%s subs=%d cmd=%s pos=[%.3f %.3f %.3f] vel=[%.3f %.3f %.3f] yaw=%.3f rad | "
+             "tag_rel xyz=[%.3f %.3f %.3f] yaw_deg=%.1f n_markers=%d | uav mode=%d armed=%d",
+             phase, cmd_topic.c_str(), nsub, cmd_to_str(uav_cmd.cmd),
+             uav_cmd.desired_pos[0], uav_cmd.desired_pos[1], uav_cmd.desired_pos[2],
+             uav_cmd.desired_vel[0], uav_cmd.desired_vel[1], uav_cmd.desired_vel[2],
+             uav_cmd.desired_yaw,
+             x_rel, y_rel, z_rel, yaw_rel, n_markers,
+             (int)uav_state.control_mode, (int)uav_state.armed);
+    // 对准/逼近高频：终端只 1Hz 打一行，避免刷屏看不清
+    bool high_rate = (strstr(phase, "approach_") != NULL || strstr(phase, "align_") != NULL ||
+                      strstr(phase, "sparse_") != NULL || strstr(phase, "fine_") != NULL ||
+                      strstr(phase, "listen_") != NULL || strstr(phase, "route_") != NULL ||
+                      strstr(phase, "final_descend") != NULL);
+    static ros::Time last_print(0);
+    static char last_phase[64] = {0};
+    bool phase_changed = (strncmp(last_phase, phase, sizeof(last_phase) - 1) != 0);
+    bool due = (ros::Time::now() - last_print).toSec() > 1.0;
+    if (!high_rate || phase_changed || due)
+    {
+        last_print = ros::Time::now();
+        snprintf(last_phase, sizeof(last_phase), "%s", phase);
+        // 只打 printf 一次，避免 Logger+ROS+printf 三条重复
+        printf("%s\n", buf);
+        fflush(stdout);
+        if (!high_rate)
+            ROS_INFO("%s", buf);
+        else
+            ROS_INFO_THROTTLE(2.0, "%s", buf);
+    }
+    if (nsub == 0)
+    {
+        ROS_WARN_THROTTLE(2.0, "[TX WARN] 没有节点订阅 %s！指令发了但控制栈可能没在听", cmd_topic.c_str());
+    }
+}
+
+// 无人机状态回调
+void uav_state_callback(const swarm_msgs::UAVState::ConstPtr &msg)
+{
+    uav_state = *msg;
+    pos_flag = true;
+}
+/*
+stop_tutorial_cb:
+监听 /sunray/stop_tutorial 话题，用于接收任务结束的指令，
+一旦接收到消息，stop_flag 被设置为 true。
+*/
+void stop_tutorial_cb(const std_msgs::Empty::ConstPtr &msg)
+{
+    stop_flag = true;
+}
+
+// 回调函数，用于获取目标二的位置和朝向
+/*
+tagCallback: 监听目标检测消息 /sunray_detect/qrcode_detection_ros，
+用于获取目标的相对位置和朝向，并对其进行滤波处理。如果有目标检测到，会更新相对位置信息。
+*/
+void tagCallback(const detection_msgs::TargetsInFrameMsg::ConstPtr &msg)
+{
+
+    if (msg->targets.size() > 0)
+    {
+        if (abs(msg->targets[0].px) > 5 || abs(msg->targets[0].py) > 5 || abs(msg->targets[0].pz) > 5)
+        {
+            return;
+        }
+        tag_flag = true;
+        last_time = ros::Time::now();
+        // landmark_detector: category_id=认出码数, tracked_id=融合选用数, w=大码数
+        n_markers = msg->targets[0].category_id;
+        x_rel = x_filter.filter(msg->targets[0].px);
+        y_rel = y_filter.filter(-msg->targets[0].py);
+        z_rel = z_filter.filter(-msg->targets[0].pz);
+        yaw_rel = yaw_filter.filter(-msg->targets[0].yaw);
+    }
+}
+
+// 机体系小位移 → 当地 ENU 位移（与 uav_control 里 body2enu 一致）
+static void body_to_enu(double bx, double by, double yaw, double &ex, double &ey)
+{
+    ex = bx * cos(yaw) - by * sin(yaw);
+    ey = bx * sin(yaw) + by * cos(yaw);
+}
+
+// 发对准指令。真飞用 XyzPosYaw 绝对坐标（和老师定点一样，setpoint 会明显跟着动）；
+// 手持 bench 仍用 XyzPosYawBody。z_mode: 0=锁高 1=慢降 2=正常下压
+static void send_align_cmd(
+    const char *phase,
+    double bx, double by,
+    int z_mode,
+    double align_gain,
+    double slow_drop,
+    double drop_height,
+    double &z_lock,
+    bool &z_lock_valid,
+    ros::Time &z_tick,
+    bool bench_mode)
+{
+    const double tick = 0.05;
+    double dt = (ros::Time::now() - z_tick).toSec();
+    z_tick = ros::Time::now();
+    if (dt < 0.0 || dt > 0.5)
+        dt = tick;
+
+    if (bench_mode || !pos_flag)
+    {
+        uav_cmd.cmd = swarm_msgs::UAVControlCMD::XyzPosYawBody;
+        uav_cmd.desired_pos[0] = bx * align_gain;
+        uav_cmd.desired_pos[1] = by * align_gain;
+        uav_cmd.desired_pos[2] = (z_mode == 0) ? 0.0 : (z_mode == 1 ? -slow_drop : -drop_height);
+        uav_cmd.desired_yaw = yaw_rel / 180.0 * M_PI / 2;
+        publish_control_cmd(phase);
+        return;
+    }
+
+    double cur_z = uav_state.position[2];
+    double yaw = uav_state.attitude[2];
+    if (!z_lock_valid || fabs(z_lock - cur_z) > 0.5)
+    {
+        z_lock = cur_z;
+        z_lock_valid = true;
+    }
+    if (z_mode == 1)
+        z_lock -= slow_drop * (dt / tick);
+    else if (z_mode == 2)
+        z_lock -= drop_height * (dt / tick);
+    // z_mode==0: z_lock 不变
+
+    double ex, ey;
+    body_to_enu(bx * align_gain, by * align_gain, yaw, ex, ey);
+    uav_cmd.cmd = swarm_msgs::UAVControlCMD::XyzPosYaw;
+    uav_cmd.desired_pos[0] = uav_state.position[0] + ex;
+    uav_cmd.desired_pos[1] = uav_state.position[1] + ey;
+    uav_cmd.desired_pos[2] = z_lock;
+    uav_cmd.desired_yaw = yaw + yaw_rel / 180.0 * M_PI / 2;
+    publish_control_cmd(phase);
+}
+
+// 丢码/间隙：真飞锁在当前绝对高度，bench 仍 body z=0
+static void send_hold_cmd(const char *phase, double &z_lock, bool &z_lock_valid, bool bench_mode)
+{
+    if (bench_mode || !pos_flag)
+    {
+        uav_cmd.cmd = swarm_msgs::UAVControlCMD::XyzPosYawBody;
+        uav_cmd.desired_pos[0] = 0.0;
+        uav_cmd.desired_pos[1] = 0.0;
+        uav_cmd.desired_pos[2] = 0.0;
+        uav_cmd.desired_yaw = 0.0;
+    }
+    else
+    {
+        if (!z_lock_valid)
+        {
+            z_lock = uav_state.position[2];
+            z_lock_valid = true;
+        }
+        uav_cmd.cmd = swarm_msgs::UAVControlCMD::XyzPosYaw;
+        uav_cmd.desired_pos[0] = uav_state.position[0];
+        uav_cmd.desired_pos[1] = uav_state.position[1];
+        uav_cmd.desired_pos[2] = z_lock;
+        uav_cmd.desired_yaw = uav_state.attitude[2];
+    }
+    publish_control_cmd(phase);
+}
+
+int main(int argc, char **argv)
+{
+
+    // 设置日志
+    Logger::init_default();
+    Logger::setPrintLevel(false);
+    Logger::setPrintTime(false);
+    Logger::setPrintToFile(false);
+    Logger::setFilename("~/Documents/Sunray_log.txt");
+
+    ros::init(argc, argv, "auto_land_node");
+    ros::NodeHandle nh("~");
+
+    ros::Rate rate(20.0);
+    node_name = ros::this_node::getName();
+
+    int uav_id;
+    string uav_name;
+
+    // 水平误差阈值   垂直误差阈值
+    double error_xy, error_z;
+    // 最后一阶段降落速度
+    double land_v;
+    // 最后一阶段降落时长
+    double land_time;
+    // 计算降落的高度落差 该值越大降落越快
+    double drop_height;
+    // 是否自动起飞
+    bool auto_takeoff = false;
+    nh.param<bool>("auto_takeoff", auto_takeoff, false);
+    // 地面台架/手持：不飞、可不接 uav_state，仍根据二维码发对准指令（只验证 TX，不真飞）
+    bool bench_mode = false;
+    nh.param<bool>("bench_mode", bench_mode, false);
+    s_bench_mode = bench_mode;
+    // 航线随飞随听：飞 demo 时见码立刻停航线并进入降落（不见码不占指令总线）
+    bool route_land_mode = false;
+    nh.param<bool>("route_land_mode", route_land_mode, false);
+    bool listen_hover_mode = false;
+    nh.param<bool>("listen_hover_mode", listen_hover_mode, false);
+    // 经 cmd_mux 时视觉指令发 vision_control_cmd，由 mux 合并进 uav_control_cmd
+    bool use_cmd_mux = false;
+    nh.param<bool>("use_cmd_mux", use_cmd_mux, false);
+    int route_warmup_frames = 3;
+    nh.param<int>("route_warmup_frames", route_warmup_frames, 3);
+    if (route_warmup_frames < 1)
+        route_warmup_frames = 1;
+    // 见码悬停专用参数（不进入 FINAL 落地）
+    int listen_warmup_frames = 3;
+    nh.param<int>("listen_warmup_frames", listen_warmup_frames, 3);
+    if (listen_warmup_frames < 1)
+        listen_warmup_frames = 1;
+    bool listen_descend_enable = true;
+    nh.param<bool>("listen_descend_enable", listen_descend_enable, true);
+    int listen_descend_until_markers = 4;
+    nh.param<int>("listen_descend_until_markers", listen_descend_until_markers, 4);
+    double listen_min_z_rel = 0.55;
+    nh.param<double>("listen_min_z_rel", listen_min_z_rel, 0.55);
+    // 互斥：悬停优先；两者都开时只悬停
+    if (listen_hover_mode && route_land_mode)
+    {
+        ROS_WARN("[MODE] listen_hover_mode + route_land_mode both true → use HOVER only");
+        route_land_mode = false;
+    }
+    // 丢码后多久开始保持高度（应明显短于 lost_tag_timeout，避免继续吃「上一拍下降」指令）
+    double lost_tag_react = 0.6;
+    nh.param<double>("lost_tag_react", lost_tag_react, 0.6);
+    // 高空丢码是否自动 Land（默认 false：原地保持，绝不盲降）
+    bool land_on_lost_tag = false;
+    nh.param<bool>("land_on_lost_tag", land_on_lost_tag, false);
+    double lost_tag_timeout = 8.0;
+    nh.param<double>("lost_tag_timeout", lost_tag_timeout, 8.0);
+    // 自动起飞高度
+    double height;
+    // 【参数】无人机编号
+    nh.param<int>("uav_id", uav_id, 1);
+    // 【参数】无人机名称
+    nh.param<string>("uav_name", uav_name, "uav");
+    nh.param<double>("height", height, 1.5);
+
+    // 降落相关参数
+    // 当无人机当前位置与标签位置(x,y)误差小于error_xy且z小于error_z时 无人机直接降落 不再进行姿态调整了
+    // 高处只有 2~4 个大码，融合出的板中心会飘，太严会一直左右晃不收敛
+    nh.param<double>("error_xy", error_xy, 0.10);
+    nh.param<double>("error_z", error_z, 0.25);
+    // 最后的一阶段的降落速度 根据不同的无人机重量和地效（有些无人机在靠经地面时会被自己吹出的风反向吹开）调整land_vel和last_land_time能有效解决这个问题
+    nh.param<double>("land_vel", land_v, 0.3);
+    // land_vel在经历last_land_time时间后会直接锁桨
+    nh.param<double>("last_land_time", land_time, 1.5);
+    // 降落落差：机体系 Z 目标恒吊在当前高度下方该值处，越大降得越快
+    nh.param<double>("drop_height", drop_height, 0.05);
+    // 看见至少 1 个码就开始水平纠偏
+    int align_min_markers = 1;
+    nh.param<int>("align_min_markers", align_min_markers, 1);
+    // 至少认出这么多码才允许下降（高处常只有 1～4 个大码，先对准再降）
+    int descend_min_markers = 2;
+    nh.param<int>("descend_min_markers", descend_min_markers, 2);
+    // 码数达到该值后用更稳的 /2 步长做精细对准
+    int fine_min_markers = 4;
+    nh.param<int>("fine_min_markers", fine_min_markers, 4);
+    // 滞回：码数掉到该值以下退出精细段（0=只要还看得见码就不因码数退出）
+    int align_exit_markers = 0;
+    nh.param<int>("align_exit_markers", align_exit_markers, 0);
+    if (align_exit_markers >= align_min_markers)
+    {
+        align_exit_markers = align_min_markers - 1;
+        if (align_exit_markers < 0)
+            align_exit_markers = 0;
+    }
+    if (descend_min_markers < align_min_markers)
+        descend_min_markers = align_min_markers;
+    if (fine_min_markers < descend_min_markers)
+        fine_min_markers = descend_min_markers;
+    // 逼近阶段相对板高度下限：码还不够多时，低于此高度只保持不再下降，避免降到贴脸丢码
+    double approach_floor_z = 0.50;
+    nh.param<double>("approach_floor_z", approach_floor_z, 0.50);
+    // 逼近阶段的粗对准阈值：水平偏差大于该值时只纠偏不下降，防止歪着往下掉出视野
+    double approach_xy = 0.15;
+    nh.param<double>("approach_xy", approach_xy, 0.15);
+    // 已经贴得这么近还丢码，直接落地比一直悬停更实际
+    double low_land_z = 0.20;
+    nh.param<double>("low_land_z", low_land_z, 0.20);
+    // 水平纠偏增益（机体系偏移再乘此系数；惯性系下 1.0≈挪一个身位）
+    double align_gain = 1.0;
+    nh.param<double>("align_gain", align_gain, 1.0);
+    // 水平还没对齐时的慢降步长
+    double slow_drop = 0.05;
+    nh.param<double>("slow_drop", slow_drop, 0.05);
+    // 起飞高度门槛：相对起飞点低于该值时本节点什么都不发，防止飞机还在地上就被按住
+    double min_start_z = 0.50;
+    nh.param<double>("min_start_z", min_start_z, 0.50);
+    uav_name = "/" + uav_name + to_string(uav_id);
+
+    state_topic = uav_name + "/swarm/uav_state";
+    tag_topic = uav_name + "/sunray_detect/qrcode_detection_ros";
+    if ((route_land_mode || listen_hover_mode) && use_cmd_mux)
+        cmd_topic = uav_name + "/vision_control_cmd";
+    else
+        cmd_topic = uav_name + "/uav_control_cmd";
+    setup_topic = uav_name + "/setup";
+
+    ros::Subscriber uav_state_sub = nh.subscribe<swarm_msgs::UAVState>(state_topic, 10, uav_state_callback);
+    // 【订阅】目标点位置
+    ros::Subscriber target_pos_sub = nh.subscribe<detection_msgs::TargetsInFrameMsg>(tag_topic, 1, tagCallback);
+    // 【订阅】任务结束
+    ros::Subscriber stop_tutorial_sub = nh.subscribe<std_msgs::Empty>(uav_name + "/stop_tutorial", 1, stop_tutorial_cb);
+
+    // 【发布】无人机控制指令 （本节点 -> sunray_control_node）
+    control_cmd_pub = nh.advertise<swarm_msgs::UAVControlCMD>(cmd_topic, 1);
+    pause_demo_pub = nh.advertise<std_msgs::Bool>(uav_name + "/pause_demo", 1, true);
+    listen_status_pub = nh.advertise<std_msgs::String>(uav_name + "/listen_status", 1);
+    set_pause_demo(false);
+    // 【发布】无人机设置指令（本节点 -> sunray_control_node）
+    uav_setup_pub = nh.advertise<swarm_msgs::UAVSetup>(setup_topic, 1);
+
+    {
+        char buf[512];
+        snprintf(buf, sizeof(buf),
+                 "[INIT] auto_takeoff=%d bench_mode=%d route_land=%d listen_hover=%d mux=%d height=%.2f | sub state=%s | sub tag=%s | pub cmd=%s | pub setup=%s",
+                 (int)auto_takeoff, (int)bench_mode, (int)route_land_mode, (int)listen_hover_mode, (int)use_cmd_mux, height,
+                 state_topic.c_str(), tag_topic.c_str(), cmd_topic.c_str(), setup_topic.c_str());
+        Logger::print_color(int(LogColor::blue), buf);
+        ROS_INFO("%s", buf);
+        printf("%s\n", buf);
+        fflush(stdout);
+    }
+
+    // 变量初始化
+    uav_cmd.header.stamp = ros::Time::now();
+    uav_cmd.cmd = swarm_msgs::UAVControlCMD::Hover;
+    uav_cmd.desired_pos[0] = 0.0;
+    uav_cmd.desired_pos[1] = 0.0;
+    uav_cmd.desired_pos[2] = 0.0;
+    uav_cmd.desired_vel[0] = 0.0;
+    uav_cmd.desired_vel[1] = 0.0;
+    uav_cmd.desired_vel[2] = 0.0;
+    uav_cmd.desired_yaw = 0.0;
+    uav_cmd.desired_yaw_rate = 0.0;
+
+    // 程序运行时自动起飞
+    if (auto_takeoff)
+    {
+        ros::Duration(0.5).sleep();
+        int times = 0;
+        while (ros::ok() && !uav_state.connected)
+        {
+            ros::spinOnce();
+            ros::Duration(1.0).sleep();
+            if (times++ > 5)
+                Logger::print_color(int(LogColor::red), node_name, ": Wait for UAV connect...");
+        }
+        Logger::print_color(int(LogColor::green), node_name, ": UAV connected!");
+
+        // 切换到指令控制模式(同时，PX4模式将切换至OFFBOARD模式)
+        while (ros::ok() && uav_state.control_mode != swarm_msgs::UAVSetup::CMD_CONTROL)
+        {
+
+            uav_setup.cmd = swarm_msgs::UAVSetup::SET_CONTROL_MODE;
+            uav_setup.control_mode = "CMD_CONTROL";
+            uav_setup_pub.publish(uav_setup);
+            Logger::print_color(int(LogColor::green), node_name, ": SET_CONTROL_MODE - [CMD_CONTROL]. ");
+            ros::Duration(1.0).sleep();
+            ros::spinOnce();
+        }
+        Logger::print_color(int(LogColor::green), node_name, ": UAV control_mode set to [CMD_CONTROL] successfully!");
+
+        // 解锁无人机
+        Logger::print_color(int(LogColor::green), node_name, ": Arm UAV in 5 sec...");
+        ros::Duration(1.0).sleep();
+        Logger::print_color(int(LogColor::green), node_name, ": Arm UAV in 4 sec...");
+        ros::Duration(1.0).sleep();
+        Logger::print_color(int(LogColor::green), node_name, ": Arm UAV in 3 sec...");
+        ros::Duration(1.0).sleep();
+        Logger::print_color(int(LogColor::green), node_name, ": Arm UAV in 2 sec...");
+        ros::Duration(1.0).sleep();
+        Logger::print_color(int(LogColor::green), node_name, ": Arm UAV in 1 sec...");
+        ros::Duration(1.0).sleep();
+        while (ros::ok() && !uav_state.armed)
+        {
+            uav_setup.cmd = swarm_msgs::UAVSetup::ARM;
+            uav_setup_pub.publish(uav_setup);
+            Logger::print_color(int(LogColor::green), node_name, ": Arm UAV now.");
+            ros::Duration(1.0).sleep();
+            ros::spinOnce();
+        }
+        Logger::print_color(int(LogColor::green), node_name, ": Arm UAV successfully!");
+
+        // 起飞无人机
+        while (ros::ok() && abs(uav_state.position[2] - uav_state.home_pos[2] - uav_state.takeoff_height) > 0.2)
+        {
+            uav_cmd.cmd = swarm_msgs::UAVControlCMD::Takeoff;
+            publish_control_cmd("auto_takeoff/Takeoff");
+            Logger::print_color(int(LogColor::green), node_name, ": Takeoff UAV now.");
+            ros::Duration(4.0).sleep();
+            ros::spinOnce();
+        }
+        Logger::print_color(int(LogColor::green), node_name, ": Takeoff UAV successfully!");
+
+        Logger::print_color(int(LogColor::blue), ">>>>>>> move to the specified height");
+        // uav_cmd.cmd = swarm_msgs::UAVControlCMD::XyVelZPos;
+        // uav_cmd.desired_vel[0] = 0.0;
+        // uav_cmd.desired_vel[1] = 0.0;
+        // uav_cmd.desired_pos[2] = height;
+        // control_cmd_pub.publish(uav_cmd);
+
+        uav_cmd.cmd = swarm_msgs::UAVControlCMD::XyzPosYaw;
+        uav_cmd.desired_pos[0] = uav_state.position[0];
+        uav_cmd.desired_pos[1] = uav_state.position[1];
+        uav_cmd.desired_pos[2] = height;
+        uav_cmd.desired_yaw=uav_state.attitude[2];
+        publish_control_cmd("auto_takeoff/XyzPosYaw");
+
+        ros::Duration(2).sleep();
+        last_time = ros::Time::now();
+
+    }
+    else
+    {
+        // 外部已起飞：必须重置计时，否则 last_time=0 会立刻判超时并误发 Land
+        last_time = ros::Time::now();
+        ROS_INFO("[INIT] auto_takeoff=false, last_time reset; waiting external UAV + tag");
+        printf("[INIT] auto_takeoff=false, last_time reset; waiting external UAV + tag\n");
+        fflush(stdout);
+    }
+
+    if (bench_mode)
+    {
+        pos_flag = true;
+        ROS_WARN("[BENCH] bench_mode=true: skip wait for UAVState; NO real flight. Watch [TX] / [LISTEN].");
+        printf("[BENCH] bench_mode=true: skip wait for UAVState; NO real flight.\n");
+        fflush(stdout);
+    }
+
+    ros::Duration(0.5).sleep();
+    ros::spinOnce();
+
+    geometry_msgs::PoseStamped pose;
+
+    // 等待订阅无人机位置
+    while (!pos_flag && ros::ok())
+    {
+        Logger::print_color(int(LogColor::blue), "wait for pose!!! topic=", state_topic);
+        ROS_WARN("wait for pose!!! listening %s (no /uav_control_cmd yet)", state_topic.c_str());
+        printf("wait for pose!!! listening %s (no /uav_control_cmd yet)\n", state_topic.c_str());
+        fflush(stdout);
+        ros::spinOnce();
+        ros::Duration(1).sleep();
+    }
+    {
+        char buf[256];
+        snprintf(buf, sizeof(buf),
+                 "[OK] got UAVState: armed=%d control_mode=%d pos=[%.2f %.2f %.2f]",
+                 (int)uav_state.armed, (int)uav_state.control_mode,
+                 uav_state.position[0], uav_state.position[1], uav_state.position[2]);
+        ROS_INFO("%s", buf);
+        printf("%s\n", buf);
+        fflush(stdout);
+    }
+    double landing_point_num = 0;
+    // false=码少逼近下降；true=码够精细水平对准
+    bool precision_align = false;
+    // 航线模式：见码后切入，保持 pause 直到降落结束或 stop
+    bool route_engaged = false;
+    // 悬停模式：见码后切入，保持 pause，只对准悬停不落地
+    bool listen_engaged = false;
+
+    // 起飞门槛只在第一次达标前生效，落地阶段不受影响
+    bool takeoff_ok = bench_mode;
+    double z_lock = 0.0;
+    bool z_lock_valid = false;
+    ros::Time z_tick = ros::Time::now();
+    if (listen_hover_mode)
+    {
+        ROS_WARN("[LISTEN-HOVER] 见码 → %s → 飞到码心悬停（不 FINAL）| descend_for_markers=%d until_n=%d min_z_rel=%.2f",
+                 use_cmd_mux ? "pause_demo(mux)" : "切WITHOUT再回CMD(地面站无remap)",
+                 (int)listen_descend_enable, listen_descend_until_markers, listen_min_z_rel);
+        printf("[LISTEN-HOVER] mux=%d warmup=%d | 老师地面站航线可直接用，无需 remap\n",
+               (int)use_cmd_mux, listen_warmup_frames);
+    }
+    else if (route_land_mode)
+    {
+        ROS_WARN("[ROUTE-LAND] 见码 → %s → 降落（>= %d 码才下压）",
+                 use_cmd_mux ? "pause_demo(mux)" : "切WITHOUT再回CMD(地面站无remap)",
+                 descend_min_markers);
+        printf("[ROUTE-LAND] mux=%d warmup=%d\n", (int)use_cmd_mux, route_warmup_frames);
+    }
+    else
+    {
+        ROS_WARN("[LAND] 真飞用 XyzPosYaw 绝对坐标纠偏(gain=%.2f) | 1码保高 >=%d码才降",
+                 align_gain, descend_min_markers);
+        printf("[LAND] 惯性系纠偏 gain=%.2f；1码只纠偏；>=%d码才降；离地%.2fm以下不发令\n",
+               align_gain, descend_min_markers, min_start_z);
+    }
+    fflush(stdout);
+
+    // 等待订阅到目标位置（航线模式不阻塞、不超时 Land）
+    while (!route_land_mode && !listen_hover_mode && !tag_flag && ros::ok())
+    {
+        double waited = (ros::Time::now() - last_time).toSec();
+        Logger::print_color(int(LogColor::blue), "wait for tag!!!");
+        ROS_WARN("wait for tag!!! topic=%s waited=%.1fs / 20s", tag_topic.c_str(), waited);
+        printf("wait for tag!!! topic=%s waited=%.1fs / 20s\n", tag_topic.c_str(), waited);
+        fflush(stdout);
+        ros::spinOnce();
+        // 初始等待识别靶标超时（原先 10s；视野不确定时放宽）
+        if (waited > 20)
+        {
+            if (bench_mode)
+            {
+                // 台架模式：超时不发 Land，继续等码
+                last_time = ros::Time::now();
+                ROS_WARN("[BENCH] wait tag timeout, reset timer (no Land)");
+                printf("[BENCH] wait tag timeout, reset timer (no Land)\n");
+                fflush(stdout);
+            }
+            else
+            {
+                Logger::print_color(int(LogColor::blue), "over time!!! Land directly");
+                landing_point_num = 0;
+                uav_cmd.cmd = swarm_msgs::UAVControlCMD::Land;
+                publish_control_cmd("timeout_wait_tag/Land");
+                break;
+            }
+        }
+        ros::Duration(1).sleep();
+    }
+
+
+    while (ros::ok())
+    {
+        ros::spinOnce();
+        ros::Duration(0.05).sleep();
+        if (stop_flag)
+        {
+            if (route_land_mode || listen_hover_mode)
+            {
+                set_pause_demo(false);
+                route_engaged = false;
+                listen_engaged = false;
+                ROS_WARN("[LISTEN] stop_tutorial: exit, release pause_demo");
+                printf("[LISTEN] stop_tutorial: 退出监听，释放航线\n");
+                fflush(stdout);
+                break;
+            }
+            Logger::print_color(int(LogColor::blue), "land");
+            uav_cmd.cmd = swarm_msgs::UAVControlCMD::Land;
+            publish_control_cmd("stop_tutorial/Land");
+            break;
+        }
+        // 飞机还在地上时绝不发指令：否则会盖掉起飞指令、还可能误判贴近而强制上锁
+        if (!takeoff_ok)
+        {
+            double agl = uav_state.position[2] - uav_state.home_pos[2];
+            if (agl >= min_start_z)
+            {
+                takeoff_ok = true;
+                if (listen_hover_mode)
+                {
+                    ROS_WARN("[LISTEN-READY] 已到 %.2fm，监听二维码（见码悬停）", agl);
+                    printf("[LISTEN-READY] 已到 %.2fm，见码即悬停\n", agl);
+                }
+                else if (route_land_mode)
+                {
+                    ROS_WARN("[ROUTE-READY] 已到 %.2fm，监听二维码（见码即降）", agl);
+                    printf("[ROUTE-READY] 已到 %.2fm，见码即进入降落\n", agl);
+                }
+                else
+                {
+                    ROS_WARN("[READY] 已到 %.2fm，开始接管降落", agl);
+                    printf("[READY] 已到 %.2fm，开始接管降落\n", agl);
+                }
+                fflush(stdout);
+            }
+            else
+            {
+                landing_point_num = 0;
+                ROS_WARN_THROTTLE(2.0,
+                    "[WAIT] 飞机离地仅 %.2fm(<%.2f)，本节点不发任何指令，请先起飞悬停",
+                    agl, min_start_z);
+                continue;
+            }
+        }
+
+        // 码数滞回：够多才开精细对准；掉太多立刻退出并准备升高（禁止码变少还继续降）
+        if (n_markers >= align_min_markers)
+            precision_align = true;
+        else if (n_markers < align_exit_markers)
+            precision_align = false;
+
+        // 进入最后一阶段：必须精细对准 + 水平居中 + 码还够，禁止「丢码后仍最终下压落地」
+        bool xy_ok = (abs(x_rel) < error_xy && abs(y_rel) < error_xy);
+        bool z_ok = (abs(z_rel) < error_z);
+        bool very_low = (abs(z_rel) < 0.20);
+        bool markers_ok = (n_markers >= descend_min_markers);
+
+        // ---------- 随用随听悬停：见码停航线，飞到码正上方悬停（不 FINAL / 不 Land） ----------
+        if (listen_hover_mode)
+        {
+            double tag_age_listen = (ros::Time::now() - last_time).toSec();
+
+            if (tag_age_listen < 0.5)
+            {
+                if (!listen_engaged)
+                {
+                    listen_engaged = true;
+                    if (use_cmd_mux)
+                    {
+                        set_pause_demo(true);
+                        ROS_WARN("[LISTEN] 见码！pause_demo → mux 停转发航线（remap 路径）");
+                        printf("[LISTEN] QR → pause_demo (mux path)\n");
+                    }
+                    else
+                    {
+                        // 老师地面站路径：无 remap，靠切 control_mode 打断 demo/航点
+                        interrupt_teacher_route("listen_hover");
+                        ROS_WARN("[LISTEN] 见码！已打断地面站航线，飞向码心悬停");
+                        printf("[LISTEN] QR → mode interrupt, hover over tag\n");
+                    }
+                    fflush(stdout);
+                }
+                landing_point_num += 1;
+
+                if (landing_point_num <= listen_warmup_frames)
+                {
+                    ROS_INFO_THROTTLE(0.5,
+                        "[LISTEN-WARMUP] %.0f/%d n=%d tag=[%.2f %.2f %.2f]",
+                        landing_point_num, listen_warmup_frames, n_markers, x_rel, y_rel, z_rel);
+                    publish_listen_status("listen_warmup");
+                    continue;
+                }
+
+                if (yaw_rel < 1 && yaw_rel > -1)
+                    yaw_rel = 0;
+
+                bool coarse_xy_ok = (fabs(x_rel) <= approach_xy && fabs(y_rel) <= approach_xy);
+                bool markers_enough = (n_markers >= listen_descend_until_markers);
+                bool height_ok = (z_rel > 0.01 && z_rel <= listen_min_z_rel);
+                // 水平粗对准后才允许为增码而下降；否则先保高纠偏。到位后 z_mode=0 锁高 = 悬停
+                bool should_descend = listen_descend_enable && coarse_xy_ok &&
+                                      !markers_enough && !height_ok;
+
+                int z_mode = should_descend ? 1 : 0;
+                double k = (markers_enough || xy_ok) ? 0.25 : 0.5;
+
+                const char *phase;
+                if (xy_ok && (markers_enough || height_ok))
+                    phase = "listen_hover/centered";
+                else if (should_descend)
+                    phase = "listen_descend/for_markers";
+                else if (!coarse_xy_ok)
+                    phase = "listen_approach/to_center";
+                else
+                    phase = "listen_approach/holdz";
+
+                send_align_cmd(phase, x_rel * k, y_rel * k, z_mode,
+                               align_gain, slow_drop, drop_height,
+                               z_lock, z_lock_valid, z_tick, bench_mode);
+                publish_listen_status(phase);
+            }
+            else if (listen_engaged)
+            {
+                // 已切入：丢码短暂间隙原地保高等码（航线已被打断，不自动恢复）
+                send_hold_cmd("listen_gap/holdz", z_lock, z_lock_valid, bench_mode);
+                publish_listen_status("listen_gap/holdz");
+                ROS_WARN_THROTTLE(2.0, "[LISTEN] tag gap %.1fs, hold", tag_age_listen);
+            }
+            else
+            {
+                // 尚未见码：不发令，地面站航线继续
+                landing_point_num = 0;
+                ROS_WARN_THROTTLE(3.0, "[LISTEN] 等待见码，地面站航线继续（无 remap）");
+                publish_listen_status("listen_idle");
+            }
+            continue; // 悬停模式不进入后面的 FINAL 降落
+        }
+
+        // ---------- 航线随飞：未见码不占总线；见码停航线并进入降落 ----------
+        if (route_land_mode && !route_engaged)
+        {
+            double tag_age_idle = (ros::Time::now() - last_time).toSec();
+            if (tag_age_idle < 0.5)
+            {
+                route_engaged = true;
+                landing_point_num = 0;
+                if (use_cmd_mux)
+                {
+                    set_pause_demo(true);
+                    ROS_WARN("[ROUTE-LAND] 见码！pause_demo → mux 停航线，准备降落");
+                    printf("[ROUTE-LAND] QR → pause_demo (mux), starting land\n");
+                }
+                else
+                {
+                    interrupt_teacher_route("route_land");
+                    ROS_WARN("[ROUTE-LAND] 见码！已打断地面站航线，进入降落");
+                    printf("[ROUTE-LAND] QR → mode interrupt, starting land\n");
+                }
+                fflush(stdout);
+            }
+            else
+            {
+                landing_point_num = 0;
+                publish_listen_status("route_idle");
+                ROS_WARN_THROTTLE(3.0, "[ROUTE-LAND] 等待见码，地面站航线继续（无 remap）");
+                continue;
+            }
+        }
+        if (route_land_mode && route_engaged)
+        {
+            double tag_age_route = (ros::Time::now() - last_time).toSec();
+            if (tag_age_route < 0.5 && landing_point_num < route_warmup_frames)
+            {
+                landing_point_num += 1;
+                send_hold_cmd("route_warmup/holdz", z_lock, z_lock_valid, bench_mode);
+                publish_listen_status("route_warmup");
+                ROS_INFO_THROTTLE(0.5, "[ROUTE-WARMUP] %.0f/%d n=%d",
+                                  landing_point_num, route_warmup_frames, n_markers);
+                continue;
+            }
+            if (landing_point_num < 11)
+                landing_point_num = 11;
+            publish_listen_status("route_landing");
+        }
+
+        if (landing_point_num > 10 && precision_align && markers_ok && xy_ok && (z_ok || very_low))
+        {
+            {
+                char buf[256];
+                snprintf(buf, sizeof(buf),
+                         "[FINAL] enter descend: xy_ok=%d z_ok=%d very_low=%d n_markers=%d | "
+                         "rel=[%.3f %.3f %.3f] err_xy=%.3f",
+                         (int)xy_ok, (int)z_ok, (int)very_low, n_markers,
+                         x_rel, y_rel, z_rel, error_xy);
+                ROS_WARN("%s", buf);
+                printf("%s\n", buf);
+                fflush(stdout);
+            }
+            ros::Time stop_time = ros::Time::now();
+            bool abort_final = false;
+            while ((ros::Time::now() - stop_time).toSec() < land_time)
+            {
+                ros::spinOnce();
+                // FINAL 中途丢码：立刻中止下压，改为升高找码（不要硬着陆）
+                if ((ros::Time::now() - last_time).toSec() > lost_tag_react ||
+                    n_markers < align_min_markers)
+                {
+                    ROS_WARN("[FINAL-ABORT] lost/weak tag during final, hold altitude");
+                    printf("[FINAL-ABORT] lost/weak tag, hold (no climb, no Land)\n");
+                    fflush(stdout);
+                    abort_final = true;
+                    break;
+                }
+                uav_cmd.cmd = swarm_msgs::UAVControlCMD::XyzVelYawBody;
+                uav_cmd.desired_vel[0] = 0;
+                uav_cmd.desired_vel[1] = 0;
+                uav_cmd.desired_vel[2] = -land_v;
+                uav_cmd.desired_yaw = 0;
+                publish_control_cmd("final_descend/XyzVelYawBody");
+
+                ros::Duration(0.1).sleep();
+            }
+            if (abort_final)
+            {
+                landing_point_num = 0;
+                precision_align = false;
+                send_hold_cmd("final_abort/holdz", z_lock, z_lock_valid, bench_mode);
+                continue;
+            }
+            Logger::print_color(int(LogColor::blue), "land successfully!!!");
+            if (bench_mode)
+            {
+                ROS_WARN("[BENCH] skip EMERGENCY_KILL");
+                printf("[BENCH] skip EMERGENCY_KILL\n");
+                fflush(stdout);
+            }
+            else
+            {
+                uav_setup.header.stamp = ros::Time::now();
+                uav_setup.cmd = swarm_msgs::UAVSetup::EMERGENCY_KILL;
+                uav_setup_pub.publish(uav_setup);
+                ROS_WARN("[TX setup] EMERGENCY_KILL on %s subs=%d", setup_topic.c_str(),
+                         uav_setup_pub.getNumSubscribers());
+                printf("[TX setup] EMERGENCY_KILL on %s\n", setup_topic.c_str());
+                fflush(stdout);
+            }
+            break;
+        }
+        double tag_age = (ros::Time::now() - last_time).toSec();
+        // 软丢码：0.6s 不见码就升高，不要干等 5～8s 还吃着上一拍的下降指令
+        if (tag_age >= lost_tag_react)
+        {
+            landing_point_num = 0;
+            precision_align = false;
+            // 已经贴到板子跟前才丢码：这么近落下去偏差有限，比一直悬停实际
+            if (!bench_mode && fabs(z_rel) > 1e-3 && fabs(z_rel) < low_land_z)
+            {
+                ROS_WARN("[LOW-LAND] lost tag at z_rel=%.2f (<%.2f), land directly",
+                         z_rel, low_land_z);
+                printf("[LOW-LAND] 贴近丢码 z_rel=%.2f，直接落地\n", z_rel);
+                fflush(stdout);
+                uav_cmd.cmd = swarm_msgs::UAVControlCMD::Land;
+                publish_control_cmd("low_lost_tag/Land");
+                break;
+            }
+            if (land_on_lost_tag && !bench_mode && tag_age > lost_tag_timeout)
+            {
+                Logger::print_color(int(LogColor::blue), "over time!!! Land directly");
+                uav_cmd.cmd = swarm_msgs::UAVControlCMD::Land;
+                publish_control_cmd("lost_tag/Land");
+                break;
+            }
+            send_hold_cmd("lost_tag/holdz", z_lock, z_lock_valid, bench_mode);
+            ROS_WARN_THROTTLE(1.0, "[HOLD] no tag %.1fs, hold (no climb)", tag_age);
+            continue;
+        }
+        if (tag_age < 0.5)
+        {
+            landing_point_num += 1;
+
+            if (landing_point_num > 10)
+            {
+                if (yaw_rel < 1 && yaw_rel > -1)
+                {
+                    yaw_rel = 0; // 小角度则不再调整 避免无人机超调而产生抽搐情况
+                }
+
+                // 分三段：1码只纠偏；>=2码才降；惯性系绝对坐标（纠偏更明显）
+                bool can_descend = (n_markers >= descend_min_markers);
+                bool fine_align = (n_markers >= fine_min_markers);
+                double k = fine_align ? 0.5 : 1.0;
+
+                if (!can_descend)
+                {
+                    send_align_cmd("sparse_align/holdz", x_rel, y_rel, 0,
+                                   align_gain, slow_drop, drop_height,
+                                   z_lock, z_lock_valid, z_tick, bench_mode);
+                }
+                else if (!xy_ok)
+                {
+                    send_align_cmd("align_xy/slow_drop", x_rel * k, y_rel * k, 1,
+                                   align_gain, slow_drop, drop_height,
+                                   z_lock, z_lock_valid, z_tick, bench_mode);
+                }
+                else
+                {
+                    send_align_cmd(fine_align ? "fine_descend/XyzPosYaw" : "align_descend/XyzPosYaw",
+                                   x_rel * k, y_rel * k, 2,
+                                   align_gain, slow_drop, drop_height,
+                                   z_lock, z_lock_valid, z_tick, bench_mode);
+                }
+            }
+            else
+            {
+                ROS_INFO_THROTTLE(1.0,
+                    "[WARMUP] landing_point_num=%.0f/10 n_markers=%d tag_rel=[%.3f %.3f %.3f]",
+                    landing_point_num, n_markers, x_rel, y_rel, z_rel);
+            }
+            continue;
+        }
+        // tag_age 在 [0.5, lost_tag_react) 的极短空隙：保高，不要继续降
+        {
+            send_hold_cmd("tag_gap/holdz", z_lock, z_lock_valid, bench_mode);
+            continue;
+        }
+        // 如果超过1秒没有收到tag数据则上升并搜索
+        // if ((ros::Time::now() - last_time).toSec() > 1)
+        // {
+        //     Logger::print_color(int(LogColor::blue), "lost the tag !!! rising and serching");
+        //     uav_cmd.header.stamp = ros::Time::now();
+        //     uav_cmd.cmd = swarm_msgs::UAVControlCMD::XyzPosYawBody;
+        //     uav_cmd.desired_pos[0] = 0;
+        //     uav_cmd.desired_pos[1] = 0;
+        //     uav_cmd.desired_pos[2] = 0.1;
+        //     uav_cmd.desired_yaw = 0;
+        //     control_cmd_pub.publish(uav_cmd);
+        //     continue;
+        // }
+    }
+    // 0.5s后结束程序
+    ros::Duration(0.5).sleep();
+}

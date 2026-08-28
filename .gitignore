@@ -1,0 +1,17 @@
+**/build/
+**/devel/
+**/logs/
+**/install/
+.catkin_tools/
+__pycache__/
+*.pyc
+*.bag
+*.zip
+*.pcd
+*.gif
+06_uav_worklog/records/
+06_uav_worklog/run/*.log
+06_uav_worklog/run/*.pid
+.env
+id_rsa
+*.pem

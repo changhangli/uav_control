@@ -1,0 +1,16 @@
+[WARN] [1786414527.084757]: [FAKE_DEMO] publishing to /uav1/demo_control_cmd @ 20Hz (amp=0.50)
+[FAKE_DEMO] 假航线已开。见码后应被 mux 挡住，出口不再是这条指令。
+[FAKE_DEMO] still sending corner=0 pos=[0.50 0.00 1.50] yaw=0.081
+[FAKE_DEMO] still sending corner=0 pos=[0.50 0.00 1.50] yaw=0.093
+[FAKE_DEMO] still sending corner=1 pos=[0.50 0.50 1.50] yaw=0.019
+[FAKE_DEMO] still sending corner=1 pos=[0.50 0.50 1.50] yaw=-0.072
+[FAKE_DEMO] still sending corner=2 pos=[0.00 0.50 1.50] yaw=-0.097
+[FAKE_DEMO] still sending corner=2 pos=[0.00 0.50 1.50] yaw=-0.033
+[FAKE_DEMO] still sending corner=3 pos=[0.00 0.00 1.50] yaw=0.062
+[FAKE_DEMO] still sending corner=3 pos=[0.00 0.00 1.50] yaw=0.100
+[FAKE_DEMO] still sending corner=0 pos=[0.50 0.00 1.50] yaw=0.046
+[FAKE_DEMO] still sending corner=0 pos=[0.50 0.00 1.50] yaw=-0.050
+[FAKE_DEMO] still sending corner=1 pos=[0.50 0.50 1.50] yaw=-0.100
+[FAKE_DEMO] still sending corner=1 pos=[0.50 0.50 1.50] yaw=-0.058
+[FAKE_DEMO] still sending corner=2 pos=[0.00 0.50 1.50] yaw=0.037
+[FAKE_DEMO] still sending corner=2 pos=[0.00 0.50 1.50] yaw=0.098

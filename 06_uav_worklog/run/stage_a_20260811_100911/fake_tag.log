@@ -1,0 +1,43 @@
+[WARN] [1786414160.971544]: [FAKE_TAG] -> /uav1/sunray_detect/qrcode_detection_ros quiet=8.0s n=4
+[FAKE_TAG] 前 8.0s 静默，之后发假码。listen 应立刻 pause_demo。
+[FAKE_TAG] waiting... 0.0s / 8.0s
+[FAKE_TAG] waiting... 0.1s / 8.0s
+[FAKE_TAG] waiting... 0.2s / 8.0s
+[FAKE_TAG] waiting... 0.3s / 8.0s
+[FAKE_TAG] waiting... 0.4s / 8.0s
+[FAKE_TAG] waiting... 1.0s / 8.0s
+[FAKE_TAG] waiting... 1.1s / 8.0s
+[FAKE_TAG] waiting... 1.2s / 8.0s
+[FAKE_TAG] waiting... 1.3s / 8.0s
+[FAKE_TAG] waiting... 1.4s / 8.0s
+[FAKE_TAG] waiting... 2.0s / 8.0s
+[FAKE_TAG] waiting... 2.1s / 8.0s
+[FAKE_TAG] waiting... 2.2s / 8.0s
+[FAKE_TAG] waiting... 2.3s / 8.0s
+[FAKE_TAG] waiting... 2.4s / 8.0s
+[FAKE_TAG] waiting... 3.0s / 8.0s
+[FAKE_TAG] waiting... 3.1s / 8.0s
+[FAKE_TAG] waiting... 3.2s / 8.0s
+[FAKE_TAG] waiting... 3.3s / 8.0s
+[FAKE_TAG] waiting... 3.4s / 8.0s
+[FAKE_TAG] waiting... 4.0s / 8.0s
+[FAKE_TAG] waiting... 4.1s / 8.0s
+[FAKE_TAG] waiting... 4.2s / 8.0s
+[FAKE_TAG] waiting... 4.3s / 8.0s
+[FAKE_TAG] waiting... 4.4s / 8.0s
+[FAKE_TAG] waiting... 5.0s / 8.0s
+[FAKE_TAG] waiting... 5.1s / 8.0s
+[FAKE_TAG] waiting... 5.2s / 8.0s
+[FAKE_TAG] waiting... 5.3s / 8.0s
+[FAKE_TAG] waiting... 5.4s / 8.0s
+[FAKE_TAG] waiting... 6.0s / 8.0s
+[FAKE_TAG] waiting... 6.1s / 8.0s
+[FAKE_TAG] waiting... 6.2s / 8.0s
+[FAKE_TAG] waiting... 6.3s / 8.0s
+[FAKE_TAG] waiting... 6.4s / 8.0s
+[FAKE_TAG] waiting... 7.0s / 8.0s
+[FAKE_TAG] waiting... 7.1s / 8.0s
+[FAKE_TAG] waiting... 7.2s / 8.0s
+[FAKE_TAG] waiting... 7.3s / 8.0s
+[FAKE_TAG] waiting... 7.4s / 8.0s
+[FAKE_TAG] >>> 开始发码（模拟看见二维码）

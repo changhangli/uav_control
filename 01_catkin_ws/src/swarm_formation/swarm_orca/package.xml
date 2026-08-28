@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>swarm_orca</name>
+  <version>0.0.0</version>
+  <description>The orca package</description>
+  <maintainer email="bcharrow@seas.upenn.edu">Ben Charrow</maintainer>
+  <author>Jur van den Berg</author>
+  <author>Stephen J. Guy</author>
+  <author>Jamie Snape</author>
+  <author>Ming C. Lin</author>
+  <author>Dinesh Manocha</author>
+  
+  <license>TODO</license>
+
+  <build_depend>swarm_msgs</build_depend>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_export_depend>swarm_msgs</build_export_depend>
+  <exec_depend>swarm_msgs</exec_depend>
+</package>

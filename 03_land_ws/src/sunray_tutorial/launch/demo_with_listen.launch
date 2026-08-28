@@ -1,0 +1,46 @@
+<!--
+  【可选测试路径】不经过老师地面站时，在 land_ws 里起 demo + remap + mux。
+  真飞对接老师图形界面时不要用这个，用：
+    bash ~/uav_worklog/scripts/start_listen_hover.sh
+  然后在地面站里解锁/起飞/选航线。
+
+  demo_id: 1=圆形  2=六边形  3=方形
+-->
+<launch>
+    <arg name="uav_id" default="1"/>
+    <arg name="uav_name" default="uav"/>
+    <arg name="demo_id" default="3"/>
+    <arg name="bench_mode" default="false"/>
+    <arg name="listen_hover_mode" default="true"/>
+    <arg name="route_land_mode" default="false"/>
+
+    <node if="$(eval demo_id == 1)" pkg="uav_demo" type="circle_vel"
+          name="circle_vel_$(arg uav_id)" output="screen">
+        <param name="uav_id" value="$(arg uav_id)"/>
+        <param name="uav_name" value="$(arg uav_name)"/>
+        <remap from="/uav$(arg uav_id)/uav_control_cmd" to="/uav$(arg uav_id)/demo_control_cmd"/>
+    </node>
+
+    <node if="$(eval demo_id == 2)" pkg="uav_demo" type="hexagon_trajectory"
+          name="hexagon_trajectory_$(arg uav_id)" output="screen">
+        <param name="uav_id" value="$(arg uav_id)"/>
+        <param name="uav_name" value="$(arg uav_name)"/>
+        <remap from="/uav$(arg uav_id)/uav_control_cmd" to="/uav$(arg uav_id)/demo_control_cmd"/>
+    </node>
+
+    <node if="$(eval demo_id == 3)" pkg="uav_demo" type="square_trajectory"
+          name="square_trajectory_$(arg uav_id)" output="screen">
+        <param name="uav_id" value="$(arg uav_id)"/>
+        <param name="uav_name" value="$(arg uav_name)"/>
+        <remap from="/uav$(arg uav_id)/uav_control_cmd" to="/uav$(arg uav_id)/demo_control_cmd"/>
+    </node>
+
+    <include file="$(find sunray_tutorial)/launch/auto_listen_hover.launch">
+        <arg name="uav_id" value="$(arg uav_id)"/>
+        <arg name="uav_name" value="$(arg uav_name)"/>
+        <arg name="bench_mode" value="$(arg bench_mode)"/>
+        <arg name="listen_hover_mode" value="$(arg listen_hover_mode)"/>
+        <arg name="route_land_mode" value="$(arg route_land_mode)"/>
+        <arg name="use_cmd_mux" value="true"/>
+    </include>
+</launch>

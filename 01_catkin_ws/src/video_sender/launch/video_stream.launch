@@ -1,0 +1,85 @@
+<launch>
+
+  <!-- ========================= -->
+  <!-- Common args               -->
+  <!-- ========================= -->
+
+  <!-- 相机 -->
+  <arg name="video_device"    default="/dev/video0"/>
+  <arg name="image_width"     default="1280"/>
+  <arg name="image_height"    default="720"/>
+  <arg name="framerate"       default="24"/>
+  <arg name="pixel_format"    default="yuyv"/>
+  <arg name="io_method"       default="mmap"/>
+  <arg name="camera_frame_id" default="camera"/>
+
+  <!-- 视频发送 -->
+  <arg name="image_topic" default="/usb_cam/image_raw"/>
+
+  <!-- 改成 ROS2 地面站实际 IP -->
+  <arg name="target_ip" default="192.168.50.103"/>
+
+  <arg name="target_port" default="9700"/>
+  <arg name="bitrate"     default="3000"/>
+
+
+  <!-- ========================= -->
+  <!-- USB Camera                -->
+  <!-- ========================= -->
+
+  <include file="$(find video_sender)/launch/usb_cam.launch">
+
+    <arg name="video_device"
+         value="$(arg video_device)"/>
+
+    <arg name="image_width"
+         value="$(arg image_width)"/>
+
+    <arg name="image_height"
+         value="$(arg image_height)"/>
+
+    <arg name="framerate"
+         value="$(arg framerate)"/>
+
+    <arg name="pixel_format"
+         value="$(arg pixel_format)"/>
+
+    <arg name="io_method"
+         value="$(arg io_method)"/>
+
+    <arg name="camera_frame_id"
+         value="$(arg camera_frame_id)"/>
+
+  </include>
+
+
+  <!-- ========================= -->
+  <!-- H264 UDP Sender           -->
+  <!-- ========================= -->
+
+  <include file="$(find video_sender)/launch/video_sender.launch">
+
+    <arg name="image_topic"
+         value="$(arg image_topic)"/>
+
+    <arg name="target_ip"
+         value="$(arg target_ip)"/>
+
+    <arg name="target_port"
+         value="$(arg target_port)"/>
+
+    <arg name="width"
+         value="$(arg image_width)"/>
+
+    <arg name="height"
+         value="$(arg image_height)"/>
+
+    <arg name="fps"
+         value="$(arg framerate)"/>
+
+    <arg name="bitrate"
+         value="$(arg bitrate)"/>
+
+  </include>
+
+</launch>

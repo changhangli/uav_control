@@ -1,0 +1,6 @@
+======== 手持/真飞状态（listen_status）========
+④ 码丢了，保高等待
+   上次：左右23cm  前后23cm  码1个
+   移回板子上方继续
+更新 17:11:59
+测完 → handheld_bench.sh stop 或 handheld_home_bench.sh stop

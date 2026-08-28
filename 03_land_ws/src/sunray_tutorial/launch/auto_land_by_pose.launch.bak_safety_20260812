@@ -1,0 +1,87 @@
+<launch>
+	<arg name="uav_id" default="1"/>
+    <arg name="uav_name" default="uav" />
+    <!-- 是否程序运行时自动起飞 -->
+    <arg name="auto_takeoff" default="true"/>
+    <!-- 航线随飞：见码停航线并降落；不见码不占 uav_control_cmd -->
+    <arg name="route_land_mode" default="false" />
+    <!-- 航线随飞：见码停航线并悬停在码心（不 FINAL 落地）；与 route_land 互斥，悬停优先 -->
+    <arg name="listen_hover_mode" default="false" />
+    <arg name="use_cmd_mux" default="false" />
+    <arg name="route_warmup_frames" default="3" />
+    <arg name="listen_warmup_frames" default="3" />
+    <arg name="listen_descend_enable" default="true" />
+    <arg name="listen_descend_until_markers" default="4" />
+    <arg name="listen_min_z_rel" default="0.55" />
+    <!-- 地面手持台架：跳过等 uav_state，只验证对准指令是否发出（禁止真飞时用） -->
+    <arg name="bench_mode" default="false"/>
+    <!-- 自动起飞高度 -->
+    <arg name="height" default="1.8"/>
+    <!-- 水平误差阈值与垂直误差阈值  无人机与目标点距离小于error_xy且者高度小于error_z 或 相对高度低于0.2m时进入最后一阶段的降落-->
+	<arg name="error_xy" default="0.10" />
+    <arg name="error_z" default="0.25" />
+    <!-- 最后一段降落速度与时间 无人机在接近地面时受风力影响较大被吹飞时可减小last_land_time或增大land_vel-->
+    <!-- 以land_v的速度下降land_time时间后停桨 -->
+    <arg name="land_vel" default="0.3" />
+    <arg name="last_land_time" default="1.5" />
+    <!-- 高空丢码是否自动 Land；默认 false=原地保持高度等码回来 -->
+    <arg name="land_on_lost_tag" default="false"/>
+    <arg name="lost_tag_timeout" default="8.0"/>
+    <arg name="lost_tag_react" default="0.6"/>
+    <!-- 降落步长：目标恒吊在当前高度下方该值处，越大降落越快 -->
+    <arg name="drop_height" default="0.05" />
+    <!-- 1 个码起纠偏；>=descend_min 才下降；>=fine_min 精细对准 -->
+    <arg name="align_min_markers" default="1" />
+    <arg name="descend_min_markers" default="2" />
+    <arg name="fine_min_markers" default="4" />
+    <arg name="align_exit_markers" default="0" />
+    <!-- 码不够时相对板低于此高度则慢降 -->
+    <arg name="approach_floor_z" default="0.50" />
+    <!-- 逼近阶段粗对准阈值（保留参数，主逻辑已改为以 error_xy 为准） -->
+    <arg name="approach_xy" default="0.15" />
+    <!-- 已贴到此高度以内还丢码则直接落地 -->
+    <arg name="low_land_z" default="0.20" />
+    <!-- 水平纠偏增益（真飞惯性系；1.0 为全量，仍弱可试 1.2） -->
+    <arg name="align_gain" default="1.0" />
+    <arg name="slow_drop" default="0.05" />
+    <!-- 飞机离地低于此高度时本节点不发任何指令（防止在地面被按住/误锁桨） -->
+    <arg name="min_start_z" default="0.50" />
+    
+    
+	<node pkg="sunray_tutorial" type="auto_land_by_pose" name="auto_land_$(arg uav_id)" output="screen">
+		<param name="uav_id" value="$(arg uav_id)" />
+        <param name="uav_name" value="$(arg uav_name)" />
+        <param name="auto_takeoff" value="$(arg auto_takeoff)" />
+        <param name="bench_mode" value="$(arg bench_mode)" />
+        <param name="route_land_mode" value="$(arg route_land_mode)" />
+        <param name="listen_hover_mode" value="$(arg listen_hover_mode)" />
+        <param name="use_cmd_mux" value="$(arg use_cmd_mux)" />
+        <param name="route_warmup_frames" value="$(arg route_warmup_frames)" />
+        <param name="listen_warmup_frames" value="$(arg listen_warmup_frames)" />
+        <param name="listen_descend_enable" value="$(arg listen_descend_enable)" />
+        <param name="listen_descend_until_markers" value="$(arg listen_descend_until_markers)" />
+        <param name="listen_min_z_rel" value="$(arg listen_min_z_rel)" />
+        <param name="height" value="$(arg height)" />
+        <!-- 当无人机当前位置与标签位置(x,y)误差小于error_xy且z小于error_z时 无人机直接降落 不再进行姿态调整了 -->
+        <param name="error_xy" value="$(arg error_xy)" />
+        <param name="error_z" value="$(arg error_z)" />
+        <!-- 最后一段降落 -->
+        <param name="land_vel" value="$(arg land_vel)" />
+        <param name="last_land_time" value="$(arg last_land_time)" />
+        <!-- 降落的高度落差  -->
+        <param name="drop_height" value="$(arg drop_height)" />
+        <param name="land_on_lost_tag" value="$(arg land_on_lost_tag)" />
+        <param name="lost_tag_timeout" value="$(arg lost_tag_timeout)" />
+        <param name="lost_tag_react" value="$(arg lost_tag_react)" />
+        <param name="align_min_markers" value="$(arg align_min_markers)" />
+        <param name="descend_min_markers" value="$(arg descend_min_markers)" />
+        <param name="fine_min_markers" value="$(arg fine_min_markers)" />
+        <param name="align_exit_markers" value="$(arg align_exit_markers)" />
+        <param name="approach_floor_z" value="$(arg approach_floor_z)" />
+        <param name="approach_xy" value="$(arg approach_xy)" />
+        <param name="low_land_z" value="$(arg low_land_z)" />
+        <param name="align_gain" value="$(arg align_gain)" />
+        <param name="slow_drop" value="$(arg slow_drop)" />
+        <param name="min_start_z" value="$(arg min_start_z)" />
+	</node>
+</launch>

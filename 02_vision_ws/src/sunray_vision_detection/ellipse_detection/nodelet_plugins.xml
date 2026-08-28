@@ -1,0 +1,9 @@
+<library path="lib/libellipse_detection_ros_detector">
+    <class name="ellipse_detection_ros/EllipseDetector"
+        type="sunray_detection::ellipse_detection_ros::EllipseDetector"
+		base_class_type="nodelet::Nodelet">
+		<description>
+          ellipse_detection_ros detector
+		</description>
+	</class>
+</library>

@@ -1,0 +1,183 @@
+[33m[WARN] [1786414155.087392833]: [MUX] demo=/uav1/demo_control_cmd vision=/uav1/vision_control_cmd out=/uav1/uav_control_cmd pause=/uav1/pause_demo[0m
+[1m[34m [INIT] auto_takeoff=0 bench_mode=1 route_land=1 mux=1 height=1.80 | sub state=/uav1/swarm/uav_state | sub tag=/uav1/sunray_detect/qrcode_detection_ros | pub cmd=/uav1/vision_control_cmd | pub setup=/uav1/setup[0m
+[0m[INFO] [1786414155.104193273]: [INIT] auto_takeoff=0 bench_mode=1 route_land=1 mux=1 height=1.80 | sub state=/uav1/swarm/uav_state | sub tag=/uav1/sunray_detect/qrcode_detection_ros | pub cmd=/uav1/vision_control_cmd | pub setup=/uav1/setup[0m
+[INIT] auto_takeoff=0 bench_mode=1 route_land=1 mux=1 height=1.80 | sub state=/uav1/swarm/uav_state | sub tag=/uav1/sunray_detect/qrcode_detection_ros | pub cmd=/uav1/vision_control_cmd | pub setup=/uav1/setup
+[0m[INFO] [1786414155.104727687]: [INIT] auto_takeoff=false, last_time reset; waiting external UAV + tag[0m
+[INIT] auto_takeoff=false, last_time reset; waiting external UAV + tag
+[33m[WARN] [1786414155.104746703]: [BENCH] bench_mode=true: skip wait for UAVState; NO real flight. Watch [TX] / [LISTEN].[0m
+[BENCH] bench_mode=true: skip wait for UAVState; NO real flight.
+[0m[INFO] [1786414155.605034821]: [OK] got UAVState: armed=0 control_mode=0 pos=[0.00 0.00 0.00][0m
+[OK] got UAVState: armed=0 control_mode=0 pos=[0.00 0.00 0.00]
+[33m[WARN] [1786414155.605315570]: [ROUTE-LAND] ????????????????????? ??? pause_demo ??? ?????????????????????>= 1 ???????????????[0m
+[ROUTE-LAND] 不见码不占总线；见码停航线并降落；warmup=2 帧
+[33m[WARN] [1786414155.655817719]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414158.670143492]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414161.682874150]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414164.696783802]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414167.712667104]: [ROUTE-LAND] ???????????????demo ????????????[0m
+[33m[WARN] [1786414169.069377542]: [PAUSE_DEMO] true ??? demo ??????????????????[0m
+[PAUSE_DEMO] true (vision active)
+[33m[WARN] [1786414169.069753788]: [ROUTE-LAND] ?????????pause_demo ??? ???????????????????????????[0m
+[ROUTE-LAND] QR detected → route paused, starting land
+[TX route_warmup/holdz] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.000 0.000 0.000] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.250 0.150 1.200] yaw_deg=-10.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414169.070004759]: [TX route_warmup/holdz] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.000 0.000 0.000] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.250 0.150 1.200] yaw_deg=-10.0 n_markers=4 | uav mode=0 armed=0[0m
+[0m[INFO] [1786414169.070203222]: [ROUTE-WARMUP] 1/2 n=4[0m
+[TX align_xy/slow_drop] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.124 0.074 -0.050] vel=[0.000 0.000 0.000] yaw=-0.086 rad | tag_rel xyz=[0.247 0.148 1.200] yaw_deg=-9.9 n_markers=4 | uav mode=0 armed=0
+[TX align_xy/slow_drop] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.102 0.061 -0.050] vel=[0.000 0.000 0.000] yaw=-0.072 rad | tag_rel xyz=[0.205 0.123 1.200] yaw_deg=-8.2 n_markers=4 | uav mode=0 armed=0
+[TX align_xy/slow_drop] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.077 0.046 -0.050] vel=[0.000 0.000 0.000] yaw=-0.054 rad | tag_rel xyz=[0.155 0.093 1.200] yaw_deg=-6.2 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414171.184390848]: [TX align_xy/slow_drop] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.077 0.046 -0.050] vel=[0.000 0.000 0.000] yaw=-0.054 rad | tag_rel xyz=[0.155 0.093 1.200] yaw_deg=-6.2 n_markers=4 | uav mode=0 armed=0[0m
+[TX align_xy/slow_drop] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.052 0.031 -0.050] vel=[0.000 0.000 0.000] yaw=-0.037 rad | tag_rel xyz=[0.105 0.063 1.200] yaw_deg=-4.2 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.050 0.030 -0.050] vel=[0.000 0.000 0.000] yaw=-0.035 rad | tag_rel xyz=[0.100 0.060 1.200] yaw_deg=-4.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.025 0.015 -0.050] vel=[0.000 0.000 0.000] yaw=-0.017 rad | tag_rel xyz=[0.050 0.030 1.200] yaw_deg=-2.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414173.246767170]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.025 0.015 -0.050] vel=[0.000 0.000 0.000] yaw=-0.017 rad | tag_rel xyz=[0.050 0.030 1.200] yaw_deg=-2.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414175.261136522]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414177.274031884]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414179.288152089]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414181.301419845]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414183.312923429]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414185.325480872]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414187.339486523]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414189.354951977]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414191.367787975]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414193.380671454]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414195.394053023]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414197.409142242]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414199.422937954]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414201.436727558]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414203.449570574]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414205.463289100]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414207.475431440]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414209.490467432]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414211.504136472]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414213.512527808]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414215.522014404]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414217.532143125]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414219.542568533]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414221.554901099]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414223.568554844]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414225.583364926]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414227.597338141]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414229.612048636]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414231.624833057]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414233.639396060]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+[0m[INFO] [1786414235.653238853]: [TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0[0m
+[TX fine_descend/XyzPosYaw] topic=/uav1/vision_control_cmd subs=2 cmd=XyzPosYawBody(14) pos=[0.006 0.004 -0.050] vel=[0.000 0.000 0.000] yaw=0.000 rad | tag_rel xyz=[0.013 0.007 1.200] yaw_deg=0.0 n_markers=4 | uav mode=0 armed=0
+... logging to /home/uav/.ros/log/a5ba0fca-9529-11f1-a611-e1192292e977/roslaunch-uav-Mini-Pc-9551.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+Done checking log file disk usage. Usage is <1GB.
+]2;/home/uav/land_ws/src/sunray_tutorial/launch/auto_listen_hover.launch
+[1mstarted roslaunch server http://127.0.0.1:38621/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /auto_land_1/align_exit_markers: 0
+ * /auto_land_1/align_gain: 1.0
+ * /auto_land_1/align_min_markers: 1
+ * /auto_land_1/approach_floor_z: 0.5
+ * /auto_land_1/approach_xy: 0.15
+ * /auto_land_1/auto_takeoff: False
+ * /auto_land_1/bench_mode: True
+ * /auto_land_1/descend_min_markers: 1
+ * /auto_land_1/drop_height: 0.05
+ * /auto_land_1/error_xy: 0.1
+ * /auto_land_1/error_z: 0.25
+ * /auto_land_1/fine_min_markers: 4
+ * /auto_land_1/height: 1.8
+ * /auto_land_1/land_on_lost_tag: False
+ * /auto_land_1/land_vel: 0.3
+ * /auto_land_1/last_land_time: 1.5
+ * /auto_land_1/listen_hover_mode: False
+ * /auto_land_1/lost_tag_react: 0.6
+ * /auto_land_1/lost_tag_timeout: 8.0
+ * /auto_land_1/low_land_z: 0.2
+ * /auto_land_1/min_start_z: 0.5
+ * /auto_land_1/route_land_mode: True
+ * /auto_land_1/route_warmup_frames: 2
+ * /auto_land_1/slow_drop: 0.05
+ * /auto_land_1/uav_id: 1
+ * /auto_land_1/uav_name: uav
+ * /auto_land_1/use_cmd_mux: True
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+ * /vision_cmd_mux_1/uav_id: 1
+ * /vision_cmd_mux_1/uav_name: uav
+
+NODES
+  /
+    auto_land_1 (sunray_tutorial/auto_land_by_pose)
+    vision_cmd_mux_1 (sunray_tutorial/vision_cmd_mux)
+
+[1mROS_MASTER_URI=http://127.0.0.1:11311[0m
+]2;/home/uav/land_ws/src/sunray_tutorial/launch/auto_listen_hover.launch http://127.0.0.1:11311
+[1mprocess[vision_cmd_mux_1-1]: started with pid [9566][0m
+[1mprocess[auto_land_1-2]: started with pid [9567][0m
+[auto_land_1-2] killing on exit
+[vision_cmd_mux_1-1] killing on exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m

@@ -1,0 +1,161 @@
+================================================================================
+随用随听 / 真飞悬停 —— 完整测试方案（可执行版）
+目标：验证「航线中见码 → 打断航线 → 飞向码心悬停」
+原则：假数据只进 demo_control_cmd / 视觉话题，绝不直接灌 MAVROS
+================================================================================
+
+【拷到 Mini-Pc】
+  scp -r C:\Users\lenovo\Desktop\listen_hover_test uav@192.168.43.72:~/uav_worklog/scripts/
+  ssh 后: chmod +x ~/uav_worklog/scripts/listen_hover_test/*.sh
+
+【话题约定】
+  假/真航线  -> /uav1/demo_control_cmd
+  视觉指令  -> /uav1/vision_control_cmd
+  仲裁出口  -> /uav1/uav_control_cmd   （给 uav_control）
+  打断开关  -> /uav1/pause_demo
+  状态串    -> /uav1/listen_status
+
+--------------------------------------------------------------------------------
+Stage A —— 纯软件打断仿真（今天就能做，无飞机）
+目的：证明 mux + listen 能打断「假航线」
+风险：无
+--------------------------------------------------------------------------------
+准备: source /opt/ros/noetic/setup.bash && source ~/land_ws/devel/setup.bash
+      cd ~/uav_worklog/scripts/listen_hover_test
+
+终端 A1（被测栈，bench）:
+  roslaunch sunray_tutorial auto_listen_hover.launch bench_mode:=true
+
+终端 A2（假航线）:
+  python3 fake_demo_cmd.py
+
+终端 A3（监视）:
+  python3 watch_interrupt.py
+
+终端 A4（8 秒后假见码）:
+  python3 fake_tag.py _quiet_sec:=8 _n_markers:=4 _px:=0.25 _py:=-0.15 _pz:=-1.2
+
+通过标准:
+  [ ] 约 8s 出现 [LISTEN] 见码！立刻 pause_demo
+  [ ] watch 打印 PASS: interrupt OK
+  [ ] pause=true 期间 /uav1/uav_control_cmd 不再跟 fake_demo 的 yaw
+  [ ] listen_status 出现 listen_approach 或 listen_hover
+
+失败排查:
+  - 无 PASS：rostopic echo /uav1/pause_demo
+  - 无视觉 TX：确认 land_ws 已编译含 listen_hover_mode / use_cmd_mux
+  - 出口仍是 demo：确认 vision_cmd_mux 在跑，topic 名是 /uav1/...
+
+本阶段通过后，才进入 B。
+
+--------------------------------------------------------------------------------
+Stage B —— 真相机 + 假航线（手持机体 / 台架）
+目的：用真实视觉替换 fake_tag，仍不真飞
+风险：极低（bench_mode）
+--------------------------------------------------------------------------------
+停掉 A4（fake_tag）。保留 A1/A2/A3，把 A1 复用或重启：
+
+终端 B1 视觉:
+  bash ~/uav_worklog/scripts/start_vision_verify.sh
+  # 或你们平时的 vision launch
+
+终端 B2:
+  roslaunch sunray_tutorial auto_listen_hover.launch bench_mode:=true
+
+终端 B3:
+  python3 fake_demo_cmd.py
+
+终端 B4:
+  python3 watch_interrupt.py
+
+操作: 手持飞机/相机扫向降落板。
+
+通过标准:
+  [ ] 板进视野 → pause_demo=true → PASS
+  [ ] n_markers 随距离变化合理（靠近应变多）
+  [ ] phase 从 listen_approach → 趋向 listen_hover/centered
+
+本阶段通过 = 「真实感知 + 打断」OK。悬停动力学未验。
+
+--------------------------------------------------------------------------------
+Stage C —— 真飞悬停打断（今天/明天真飞主目标）
+目的：空中悬停时见码，机体真的往码心挪并悬停
+风险：中（遥控器随时接管）
+--------------------------------------------------------------------------------
+前置: Stage A、B 通过；桨叶正常；定位正常；遥控器可接管。
+
+顺序（严格）:
+  1) 老师侧: 控制栈就绪，解锁起飞，飞到约 1.5~1.8m，悬停在板附近上方
+     （本阶段先不要方形航线）
+  2) 我方视觉: start_vision_verify.sh（或等价）
+  3) 我方听停（注意 bench_mode:=false）:
+       roslaunch sunray_tutorial auto_listen_hover.launch bench_mode:=false
+     若老师航线也走 uav_control_cmd 且无法 remap，则本阶段可先:
+       - 老师只悬停、不发航线点；或
+       - 老师航线 remap 到 demo_control_cmd（与 demo_with_listen 相同做法）
+  4) 监视:
+       python3 watch_interrupt.py
+       # 另开: rostopic echo /uav1/listen_status
+  5) 若悬停点看不到板: 遥控微调水平，直到认码
+  6) 成功后: Ctrl+C 听停节点 → pause 应回 false（或按你们 stop 逻辑）
+     停视觉脚本
+
+通过标准:
+  [ ] pause_demo=true
+  [ ] 机体水平明显向板心移动（肉眼 + listen_status px/py 变小）
+  [ ] 到达后 phase≈listen_hover/centered，高度不失控下砸
+  [ ] 丢码短时：hold / 不乱飞；可人工接管
+
+一票否决（立刻接管）:
+  - 明显往错误方向猛冲
+  - 高度突然掉 >0.5m 且未对准
+  - yaw 乱转 / 动捕跳变
+
+--------------------------------------------------------------------------------
+Stage D —— 航线中随用随听（Stage C 通过后再做）
+目的：方形（或圆/六边）飞行中见码打断
+风险：中高
+--------------------------------------------------------------------------------
+优先用现成 launch（会把 demo remap 到 demo_control_cmd + mux）:
+  roslaunch sunray_tutorial demo_with_listen.launch demo_id:=3 bench_mode:=false
+  # demo_id: 1圆 2六边 3方
+  # 需能找到 uav_demo 包；若包在 catkin_ws，先 source catkin_ws
+
+若老师自己启航线、无法改他源码:
+  用 launch remap 仅改他的启动命令，把
+    /uav1/uav_control_cmd -> /uav1/demo_control_cmd
+  同时必须起 vision_cmd_mux + auto_listen_hover。
+
+通过标准:
+  [ ] 航线飞行中见码 → 航线出口被切走（机体不再沿方形走）
+  [ ] 改飞向板心并悬停
+  [ ] stop / 丢码策略符合预期（按当前代码：engaged 后丢码会 hold 或恢复，以 log 为准）
+
+--------------------------------------------------------------------------------
+Stage E ——（可选）听停后再降落
+仅当产品需要「见码悬停后继续落地」时再开；与 listen 默认「悬停不落」区分开。
+用 auto_land_by_pose（listen_hover_mode:=false）另测，不要和 D 混在同一架次。
+
+================================================================================
+每阶段记录（复制填写）
+================================================================================
+日期:
+阶段: A / B / C / D
+命令:
+pause 是否翻转:
+watch 是否 PASS:
+listen_status 末几行:
+异常:
+结论: 通过 / 失败 / 需接管
+
+================================================================================
+一页心智图
+================================================================================
+  假或真航线 --demo_control_cmd--+
+                                 +--> vision_cmd_mux --uav_control_cmd--> 飞控栈
+  listen 视觉 --vision_control_cmd--+
+         ^
+         pause_demo=true 时只走视觉
+
+测「打断」= 测 mux 换路，不是测 MAVROS。
+测「悬停」= Stage C 真飞才算数。

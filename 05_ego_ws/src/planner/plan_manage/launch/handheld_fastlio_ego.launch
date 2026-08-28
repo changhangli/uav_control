@@ -1,0 +1,133 @@
+<launch>
+  <!--
+    手持测试：Livox MID360 + FAST-LIO + EgoPlanner + RViz
+    不启动 MAVROS / uav_control / positionCmd2sunray，不解锁、不起桨。
+    FAST-LIO 话题保持原样：/Odometry  /cloud_registered
+    仅往 ~/ego_ws 里加文件，不改 ws_livox / catkin_ws。
+  -->
+
+  <arg name="rviz" default="true"/>
+  <arg name="drone_id" default="0"/>
+  <arg name="max_vel" default="0.5"/>
+  <arg name="max_acc" default="0.5"/>
+  <arg name="planning_horizon" default="5.0"/>
+  <arg name="map_size_x" default="20.0"/>
+  <arg name="map_size_y" default="20.0"/>
+  <arg name="map_size_z" default="4.0"/>
+
+  <!-- FAST-LIO 世界系是 camera_init，EgoPlanner 栅格用 world，两者重合即可 -->
+  <node pkg="tf" type="static_transform_publisher" name="world_to_camera_init"
+        args="0 0 0 0 0 0 world camera_init 100"/>
+
+  <!-- 雷达驱动（包在 ws_livox，不改它的文件） -->
+  <include file="$(find livox_ros_driver2)/launch_ROS1/msg_MID360s.launch">
+    <arg name="rviz_enable" value="false"/>
+    <arg name="rosbag_enable" value="false"/>
+  </include>
+
+  <!-- FAST-LIO：读它的 yaml，但不 include 原 launch，以免打开它的 RViz / 写爆 scans.pcd -->
+  <rosparam command="load" file="$(find fast_lio)/config/mid360.yaml"/>
+  <param name="feature_extract_enable" type="bool" value="0"/>
+  <param name="point_filter_num" type="int" value="3"/>
+  <param name="max_iteration" type="int" value="3"/>
+  <param name="filter_size_surf" type="double" value="0.5"/>
+  <param name="filter_size_map" type="double" value="0.5"/>
+  <param name="cube_side_length" type="double" value="1000"/>
+  <param name="runtime_pos_log_enable" type="bool" value="0"/>
+  <param name="pcd_save/pcd_save_en" value="false"/>
+  <node pkg="fast_lio" type="fastlio_mapping" name="laserMapping" output="screen"/>
+
+  <!-- EgoPlanner：直接订 FAST-LIO 的里程计和世界系点云 -->
+  <node pkg="ego_planner" name="drone_$(arg drone_id)_ego_planner_node" type="ego_planner_node" output="screen">
+    <remap from="~odom_world" to="/Odometry"/>
+    <remap from="~planning/bspline" to="/drone_$(arg drone_id)_planning/bspline"/>
+    <remap from="~planning/data_display" to="/drone_$(arg drone_id)_planning/data_display"/>
+    <remap from="~planning/broadcast_bspline_from_planner" to="/broadcast_bspline"/>
+    <remap from="~planning/broadcast_bspline_to_planner" to="/broadcast_bspline"/>
+    <remap from="~grid_map/odom" to="/Odometry"/>
+    <remap from="~grid_map/cloud" to="/cloud_registered"/>
+    <remap from="~grid_map/pose" to="pcl_render_node/camera_pose"/>
+    <remap from="~grid_map/depth" to="pcl_render_node/depth"/>
+    <remap from="~move_base_simple/goal" to="/move_base_simple/goal"/>
+
+    <!-- 1 = RViz 2D Nav Goal；手持立刻规划，不等起飞 trigger -->
+    <param name="fsm/flight_type" value="1" type="int"/>
+    <param name="fsm/thresh_replan_time" value="1.0" type="double"/>
+    <param name="fsm/thresh_no_replan_meter" value="1.0" type="double"/>
+    <param name="fsm/planning_horizon" value="$(arg planning_horizon)" type="double"/>
+    <param name="fsm/planning_horizen_time" value="3" type="double"/>
+    <param name="fsm/emergency_time" value="1.0" type="double"/>
+    <param name="fsm/realworld_experiment" value="false"/>
+    <param name="fsm/fail_safe" value="true"/>
+
+    <param name="grid_map/resolution" value="0.12"/>
+    <param name="grid_map/map_size_x" value="$(arg map_size_x)"/>
+    <param name="grid_map/map_size_y" value="$(arg map_size_y)"/>
+    <param name="grid_map/map_size_z" value="$(arg map_size_z)"/>
+    <param name="grid_map/local_update_range_x" value="5.5"/>
+    <param name="grid_map/local_update_range_y" value="5.5"/>
+    <param name="grid_map/local_update_range_z" value="4.5"/>
+    <param name="grid_map/obstacles_inflation" value="0.08"/>
+    <param name="grid_map/local_map_margin" value="10"/>
+    <param name="grid_map/ground_height" value="-1.0"/>
+    <param name="grid_map/virtual_ceil_height" value="3.5"/>
+    <param name="grid_map/visualization_truncate_height" value="3.0"/>
+    <param name="grid_map/show_occ_time" value="false"/>
+    <param name="grid_map/pose_type" value="1"/>
+    <param name="grid_map/frame_id" value="world"/>
+    <param name="grid_map/cx" value="321.04638671875"/>
+    <param name="grid_map/cy" value="243.44969177246094"/>
+    <param name="grid_map/fx" value="387.229248046875"/>
+    <param name="grid_map/fy" value="387.229248046875"/>
+    <param name="grid_map/use_depth_filter" value="false"/>
+    <param name="grid_map/depth_filter_tolerance" value="0.15"/>
+    <param name="grid_map/depth_filter_maxdist" value="5.0"/>
+    <param name="grid_map/depth_filter_mindist" value="0.2"/>
+    <param name="grid_map/depth_filter_margin" value="2"/>
+    <param name="grid_map/k_depth_scaling_factor" value="1000.0"/>
+    <param name="grid_map/skip_pixel" value="2"/>
+    <param name="grid_map/p_hit" value="0.65"/>
+    <param name="grid_map/p_miss" value="0.35"/>
+    <param name="grid_map/p_min" value="0.12"/>
+    <param name="grid_map/p_max" value="0.90"/>
+    <param name="grid_map/p_occ" value="0.80"/>
+    <param name="grid_map/min_ray_length" value="1.0"/>
+    <param name="grid_map/max_ray_length" value="4.5"/>
+
+    <param name="manager/drone_id" value="$(arg drone_id)"/>
+    <param name="manager/max_vel" value="$(arg max_vel)" type="double"/>
+    <param name="manager/max_acc" value="$(arg max_acc)" type="double"/>
+    <param name="manager/max_jerk" value="4" type="double"/>
+    <param name="manager/control_points_distance" value="0.4" type="double"/>
+    <param name="manager/feasibility_tolerance" value="0.05" type="double"/>
+    <param name="manager/planning_horizon" value="$(arg planning_horizon)" type="double"/>
+    <param name="manager/use_distinctive_trajs" value="true" type="bool"/>
+
+    <param name="optimization/lambda_smooth" value="2.0" type="double"/>
+    <param name="optimization/lambda_collision" value="0.5" type="double"/>
+    <param name="optimization/lambda_feasibility" value="0.1" type="double"/>
+    <param name="optimization/lambda_fitness" value="1.0" type="double"/>
+    <param name="optimization/dist0" value="0.5" type="double"/>
+    <param name="optimization/swarm_clearance" value="0.5" type="double"/>
+    <param name="optimization/max_vel" value="$(arg max_vel)" type="double"/>
+    <param name="optimization/max_acc" value="$(arg max_acc)" type="double"/>
+    <param name="bspline/limit_vel" value="$(arg max_vel)" type="double"/>
+    <param name="bspline/limit_acc" value="$(arg max_acc)" type="double"/>
+    <param name="bspline/limit_ratio" value="1.1" type="double"/>
+  </node>
+
+  <!-- 只把轨迹变成 pos_cmd 方便 RViz/rostopic 看，不转给飞控 -->
+  <node pkg="ego_planner" name="drone_$(arg drone_id)_traj_server" type="traj_server" output="screen">
+    <remap from="position_cmd" to="/planning/pos_cmd"/>
+    <remap from="~planning/bspline" to="/drone_$(arg drone_id)_planning/bspline"/>
+    <param name="traj_server/time_forward" value="1.0" type="double"/>
+  </node>
+
+
+  <node pkg="ego_planner" type="save_traj.py" name="traj_saver" output="screen"/>
+
+  <group if="$(arg rviz)">
+    <node pkg="rviz" type="rviz" name="handheld_rviz" output="log"
+          args="-d $(find ego_planner)/launch/handheld.rviz"/>
+  </group>
+</launch>

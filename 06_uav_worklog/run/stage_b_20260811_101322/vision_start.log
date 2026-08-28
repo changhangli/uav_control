@@ -1,0 +1,15 @@
+[1/4] 检查 / 启动 roscore ...
+  roscore 已在运行
+[2/4] 启动相机 + landmark_detection ...
+[3/4] 等待节点就绪 ...
+  等待中... cam=0 landmark=1 (1/40)
+  节点就绪。检测话题有数据。
+[4/5] 启动位姿门控 ...
+  门控已启动 → /uav1/sunray_detect/landmark_pose_gated
+
+重要：
+  - 请把摄像头对准降落板
+  - 看画面: rqt_image_view → .../image_rect
+
+[5/5] CSV 记录已后台启动 → records/landmark_pose_gated_*.csv
+daemon 模式完成（不占终端）。

@@ -1,0 +1,5 @@
+<launch>
+    <!-- 验证用一键启动：相机 + 降落板识别 -->
+    <include file="$(find web_cam)/launch/web_cam.launch" />
+    <include file="$(find landmark_detection_ros)/launch/landmark_detection.launch" />
+</launch>

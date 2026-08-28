@@ -1,0 +1,39 @@
+<!-- 随用随听（对接老师地面站图形界面，默认无 remap / 无 mux）
+     流程：地面站解锁起飞选航线 → 本节点只监听摄像头
+           见码 → 切 control_mode 打断航线（同「点降落」思路）→ 飞到码心悬停
+     可选 remap 测试：use_cmd_mux:=true（需配合 demo_with_listen.launch）
+-->
+<launch>
+	<arg name="uav_id" default="1"/>
+    <arg name="uav_name" default="uav" />
+    <arg name="bench_mode" default="false" />
+    <!-- 老师要的：见码悬停。见码降落才开 route_land -->
+    <arg name="listen_hover_mode" default="true" />
+    <arg name="route_land_mode" default="false" />
+    <!-- 默认 false：直接发 /uav_control_cmd，兼容地面站启动的 demo/航点 -->
+    <arg name="use_cmd_mux" default="false" />
+
+    <group if="$(arg use_cmd_mux)">
+        <include file="$(find sunray_tutorial)/launch/vision_cmd_mux.launch">
+            <arg name="uav_id" value="$(arg uav_id)"/>
+            <arg name="uav_name" value="$(arg uav_name)"/>
+        </include>
+    </group>
+
+    <include file="$(find sunray_tutorial)/launch/auto_land_by_pose.launch">
+        <arg name="auto_takeoff" value="false" />
+        <arg name="bench_mode" value="$(arg bench_mode)" />
+        <arg name="listen_hover_mode" value="$(arg listen_hover_mode)" />
+        <arg name="route_land_mode" value="$(arg route_land_mode)" />
+        <arg name="use_cmd_mux" value="$(arg use_cmd_mux)" />
+        <arg name="land_on_lost_tag" value="false" />
+        <arg name="route_warmup_frames" value="2" />
+        <arg name="listen_warmup_frames" value="3" />
+        <arg name="listen_descend_enable" value="true" />
+        <arg name="listen_descend_until_markers" value="4" />
+        <arg name="listen_min_z_rel" value="0.55" />
+        <arg name="descend_min_markers" value="2" />
+        <arg name="uav_id" value="$(arg uav_id)"/>
+        <arg name="uav_name" value="$(arg uav_name)"/>
+    </include>
+</launch>

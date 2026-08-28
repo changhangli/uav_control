@@ -1,0 +1,23 @@
+<launch>
+	<arg name="uav_id" default="1"/>
+    <arg name="uav_name" default="uav" />
+    <arg name="demo_id" default="1" />
+
+	<node if="$(eval demo_id == 1)" pkg="uav_demo" type="circle_vel" name="circle_vel$(arg uav_id)" output="screen">
+		<param name="uav_id" value="$(arg uav_id)" />
+		<param name="uav_name" value="$(arg uav_name)" />
+	</node>
+
+	<node if="$(eval demo_id == 2)" pkg="uav_demo" type="hexagon_trajectory" name="hexagon_trajectory$(arg uav_id)" output="screen">
+		<param name="uav_id" value="$(arg uav_id)" />
+		<param name="uav_name" value="$(arg uav_name)" />
+	</node>
+
+	<node if="$(eval demo_id == 3)" pkg="uav_demo" type="square_trajectory" name="square_trajectory$(arg uav_id)" output="screen">
+		<param name="uav_id" value="$(arg uav_id)" />
+		<param name="uav_name" value="$(arg uav_name)" />
+	</node>
+
+
+</launch>
+
